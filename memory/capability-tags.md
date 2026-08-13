@@ -14,13 +14,18 @@
 | `weight` | 重量（含单位） | goods_gross_weight, goods_net_weight, gross/net weight title unit |
 | `size` | 尺寸/规格 | size |
 | `parcel` | 件数/包装数 | goods_parcel, goods_carton |
-| `identifier` | 标识/编号 | product_no, item_no, order_no, invoice_no |
+| `identifier` | 标识/编号 | product_no, item_no, order_no, invoice_no, container_no |
 | `item` | 品名/货物描述 | goods_name（长文本） |
-| `party` | 当事人 | 买卖双方、承运人 |
-| `address` | 地址 | 收发地址 |
-| `temporal` | 时间 | 日期、签发日 |
+| `party` | 当事人 | buyer/seller/consignee/shipper/factory/beneficiary/carrier |
+| `address` | 地址 | buyer_address, consignee_address |
+| `temporal` | 时间 | issue_date, shipment_date, invoice_date |
 | `unit` | 单位（独立于数值） | currency, weight_unit |
 | `status` | 状态 | 单据状态、字段是否存在 |
+| `transport` | 运输 | port_of_loading/discharge, vessel_name, flight_no, awb, voyage |
+| `location` | 地点（非运输） | country_of_origin/origin, place_of_delivery/receipt |
+| `bank` | 银行 | beneficiary_bank, issue_bank, swift_code, bank account |
+| `payment` | 付款 | payment_term, payment_info, financing |
+| `term` | 单据条款/元数据项 | incoterm, freight, declared_value, signature, packaging, title, remarks, doc.count |
 
 ## 2. 值形态 value_shape（字段值"长什么样"）
 

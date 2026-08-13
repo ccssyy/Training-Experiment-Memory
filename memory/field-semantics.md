@@ -1,7 +1,7 @@
 # 字段语义词典（v2：三层通用结构，全单据重做）
 
 > 日期：2026-08-13 ｜ 状态：candidate（待人工确认）
-> **覆盖**：16 个单据（早期 6 种：商业发票 ci / 提单 bl / 航空单 air / 贷款申请书 loan / 购买订单 po / 货物收据 cr + 第二批 10 种：借记通知单 dbn / 发货单 sdn / 形式发票 pi / 提货单 do / 海运单 swb / 出口托收申请书 aco / 装箱单 pl / 贷记通知单 crn / 销售合同 sc / 销售订单 so），**298 个字段名归并为 60 个 canonical 语义概念**。
+> **覆盖**：16 个单据（早期 6 种：商业发票 ci / 提单 bl / 航空单 air / 贷款申请书 loan / 购买订单 po / 货物收据 cr + 第二批 10 种：借记通知单 dbn / 发货单 sdn / 形式发票 pi / 提货单 do / 海运单 swb / 出口托收申请书 aco / 装箱单 pl / 贷记通知单 crn / 销售合同 sc / 销售订单 so），**298 个字段名归并为 85 个 canonical 语义概念**。
 > **来源**：`system_prompt_all_en_zh_merge_1126.py`（16 个 `*_prompt_field` + `alias_map` + `all_keys_group_map` 解析）+ `20260805_full_field_contract_audit.md` 值形态规则。
 
 ## 0. 三层结构
@@ -179,7 +179,7 @@ canonical 语义概念（通用，跨单据稳定）   ← 检索键之一，与
 | price ↔ amount ↔ total.amount | 单价 / 金额小计 / 总额 |
 | no.invoice ↔ no.packing ↔ no.pi | 发票号 / 装箱单号 / 形式发票号（共用编号时装箱单优先） |
 | party.buyer ↔ party.consignee | 买方 vs 收货方 |
-| party.seller ↔ party.shipper ↔ party.issuer | 卖方 vs 发货方 vs 出具人（title_company 是页眉公司，不再标 seller） |
+| party.seller ↔ party.shipper | 卖方 vs 发货方（issuer/issued_by/title_company 已归入 party.seller，页眉公司不再单独标 seller） |
 | port.loading ↔ port.discharge ↔ port.transhipment | 发货港 / 目的港 / 中转港 |
 | date.issue ↔ date.invoice ↔ date.shipment ↔ date.delivery ↔ date.flight | 引导词区分 |
 | no.order ↔ no.contract ↔ no.deliver | 订单号 / 合同号 / 交货单号 |
@@ -206,14 +206,21 @@ canonical 语义概念（通用，跨单据稳定）   ← 检索键之一，与
 
 ## 5. 与能力标签的映射
 
-概念 → capability-tags（§见 capability-tags.md）：
+概念 → capability-tags（语义标签见 capability-tags.md）：
 
-- quantity/carton/parcel/pallet/item_no/total.qty → `quantity` + `numeric_value` + `grouped_value`
+- quantity/carton/parcel/pallet/total.qty → `quantity` + `numeric_value` + `grouped_value`
 - weight.gross/net/unspecified、total.weight.*、size、measurement → `weight`/`size` + `numeric_unit`
 - price/amount/subtotal/total.amount/currency → `monetary` + `currency_amount`
-- product_no/item_no/no.*/container/seal/hs_code → `identifier` + `code_value`
+- item_no → `identifier` + `numeric_value`（序号，数值型标识）
+- product_no/no.*/container/seal/hs_code → `identifier` + `code_value`
 - name → `item` + `long_text`
-- party.* → `party`；address → `address`；date.* → `temporal`；port.*/vessel/flight → 运输语义
+- party.* → `party` + `short_text`；address → `address` + `long_text`
+- date.* → `temporal` + `date_value`
+- port.loading/discharge/transhipment、vessel、voyage、flight、awb → `transport` + `short_text`
+- origin、place.delivery/receipt → `location` + `short_text`
+- bank.* → `bank` + `short_text`
+- payment.term/info、financing → `payment` + `short_text`
+- incoterm、freight、declared_value、signature、packaging、goods.attr、title、remarks、doc.count → `term`（goods.attr/packaging 亦可挂 `item`）
 
 ## 6. 未覆盖字段处理链路
 
