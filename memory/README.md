@@ -10,7 +10,7 @@
 | `capability-tags.md` | 通用能力标签初版（语义 17 + 值形态 8 + 基数 7 + 版式 8） | candidate |
 | `field-semantics.md` | 字段语义词典 v2（85 概念 × 16 单据 × 298 字段名归并） | candidate |
 | `experience-cases.md` | 首批 ExperienceCase（24 条，绑证据；non_goods round3 6 + 早期训练 6） | candidate |
-| `pattern-claims.md` | 首批 PatternClaim（18 条，聚合 + 失效边界；non_goods 3 + 早期训练 6） | candidate/validated |
+| `pattern-claims.md` | 首批 PatternClaim（18 条，聚合 + 失效边界；non_goods 3 + 早期训练 6） | candidate/confirmed/validated |
 
 ## 关系
 

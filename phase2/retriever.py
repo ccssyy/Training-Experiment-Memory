@@ -65,8 +65,11 @@ def score_claim(claim, profile):
         else:
             return 0.0, matched
 
+    # status 加权：validated（干预验证）> confirmed（归因/诊断确认）
     if claim["status"] == "validated":
         score += 0.15
+    elif claim["status"] == "confirmed":
+        score += 0.08
 
     return round(score, 4), matched
 

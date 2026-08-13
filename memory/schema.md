@@ -50,7 +50,7 @@ provenance*: {source_revisions, decision_ref, created_at}  # 对象（source_rev
 
 ```yaml
 claim_id*: CLAIM-0001                                # 单值
-status*: candidate | validated | rejected | unresolved | superseded  # 单值（枚举）
+status*: candidate | confirmed | validated | rejected | unresolved | superseded  # 单值（枚举）
 capability_tags*:                                   # 对象（4 个子键，均列表）——字段语义维度
   semantic: [quantity, monetary, weight]
   value_shape: [grouped_value, numeric_unit]
@@ -77,7 +77,8 @@ outcome_aggregate: {typical_delta, cost_range, stability}  # 对象（typical_de
 - `task_shape`（任务形态）：上下文类经验（训练配置/运行时/评估口径，如 GB256 主线、vLLM bbox、cluster split、字段面对齐）靠它命中。这类经验的 `capability_tags` 可为空，但 `task_shape` 必须非空，否则检索永远命中不了（成为"死数据"）。
 
 约束：
-- `status=validated` 需：目标改善 + bbox/基数/归组无未解释退化 + 保护字段无回归 + evaluator 有效 + runtime raw 完整 + ID-OOD 可解释 + 人工验收（7 项）。
+- `status=confirmed` 用于"归因/诊断/方法论确认"类结论——问题归因正确、或工程决策合理，但**未经过"干预→训练改善"的验证**（如"空输出二分""指标下降先查口径"）。证据强度低于 validated，检索时权重相应降低。
+- `status=validated` 需：目标改善 + bbox/基数/归组无未解释退化 + 保护字段无回归 + evaluator 有效 + runtime raw 完整 + ID-OOD 可解释 + 人工验收（7 项）。**validated 是"干预验证通过"，不是"结论可信"。**
 - `status=rejected` 用于"验证失败的策略"，作为负经验（contraindication 素材）。
 - `status=unresolved` 用于"问题确认但无解决路径"的长期难例，显式建模防止反复试错。
 - 迁移层级：`direct`（结构/bbox/版式/评估基本一致）> `structural`（结构一致版式差异）> `mechanism`（字段不同机制相同）> `context`（仅业务上下文相似，**不生成训练动作**）。
@@ -90,10 +91,13 @@ ExperienceCase │ (不可变)    │  一次性写入，无状态转换
               └─────────────┘
 
 PatternClaim:
-  candidate ──► validated ──► superseded
+  candidate ──► confirmed ──► validated ──► superseded
      │              │
      ├──► rejected ─┴──► (保留为负经验)
      └──► unresolved（长期难例，阻断重复试错）
+
+  confirmed = 归因/诊断/方法论确认（结论可信，但"干预→改善"未验证）
+  validated = 干预验证通过（7 项全过）
 ```
 
 每个状态转换 = 一条裁判记录（消费方侧记录，如 ATF 的 Decision Ledger）；memory 核心不引入新事实 owner。

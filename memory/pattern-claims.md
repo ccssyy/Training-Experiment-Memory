@@ -269,7 +269,7 @@ outcome_aggregate: {typical_delta: pi F1 0.6320（最低）/ so 漏 goods_name, 
 
 ```yaml
 claim_id: CLAIM-0013
-status: validated            # 历史多轮验证，PO/CR 真负样本、CI/BL/Air 选错字段的二分清晰
+status: confirmed            # 归因正确（空输出二分），但"二分后训练改善"未验证
 capability_tags:
   semantic: []
   value_shape: []
@@ -292,7 +292,7 @@ outcome_aggregate: {typical_delta: 可避免比例 CI 77%/BL 71%/Air 94%/PO 7%/C
 
 ```yaml
 claim_id: CLAIM-0014
-status: validated
+status: confirmed
 capability_tags:
   semantic: []
   value_shape: []
@@ -315,7 +315,7 @@ outcome_aggregate: {typical_delta: BL F1 -0.0646 为口径迁移, cost_range: �
 
 ```yaml
 claim_id: CLAIM-0015
-status: validated
+status: confirmed
 capability_tags:
   semantic: []
   value_shape: []
@@ -359,7 +359,7 @@ outcome_aggregate: {typical_delta: letterhead 卖方抬头 45/82, cost_range: �
 
 ```yaml
 claim_id: CLAIM-0017
-status: validated
+status: confirmed
 capability_tags:
   semantic: []
   value_shape: []
