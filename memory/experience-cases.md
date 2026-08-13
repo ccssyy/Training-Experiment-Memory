@@ -1,4 +1,4 @@
-# 首批 ExperienceCase（24 条）
+# 首批 ExperienceCase（28 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate，待 Phase 1 交叉验证后确认）
 > 证据来源：`docs/performance/`、`[知识库]/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `[Qwen训练仓库]` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包；CASE-0019 起为 coding-brain Registry（4-5 月早期训练）。
@@ -502,4 +502,88 @@ evidence_refs:
   - [知识库]/04_Registries/Experiment Registry.md（EXP-20260423-5goods-balance）
   - [知识库]/04_Registries/Dataset Registry.md
 provenance: {source_revisions: [0423_5_goods_balanced], decision_ref: null, created_at: 2026-08-13}
+```
+
+---
+
+## 以下 CASE-0025~0028 来源：session-digests（训练前置/数据工程方法论）
+
+## CASE-0025 badcase 分类法（7 类错误 + 训练侧三分）
+
+```yaml
+case_id: CASE-0025
+run_ref: exp5 badcase taxonomy（checkpoint-1015）
+fields: [goods_weight, goods_parcel, goods_quantity, goods_name, product_no, item_no]
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-BADCASE-TAXONOMY
+  symptom_metric: 167 条复核中漏抽 102 / 误抽 5 / 字段混淆 9 / 边界错误 12 / OCR 规范化 7 / 标签问题 32；仅看 CSV 无法区分这些
+intervention: 固定 7 类错误枚举（漏抽/误抽/字段混淆/边界/OCR/标签问题/只监控）+ 图片/GT/Predict/bbox 联合复核 + 训练侧三分（train yes 134 / review 32 / no 1）
+outcome:
+  baseline_ref: checkpoint-1015
+  delta: {漏抽占比: 61.1%, 标签问题: 19.2%}
+  protected_regression: null
+evidence_refs:
+  - [Qwen训练仓库]/docs/performance/2026-05-13-exp5-multimodal-badcase-taxonomy.md
+provenance: {source_revisions: [exp5 badcase taxonomy], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0026 测试 badcase 去测试化后才能入训
+
+```yaml
+case_id: CASE-0026
+run_ref: exp5 badcase taxonomy 决策
+fields: []
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-BADCASE-DECONTAMINATE
+  symptom_metric: 标准测试集 badcase 若直接入训会造成泄漏；但全丢弃又浪费诊断价值
+intervention: 测试 badcase 只用于诊断和规则归纳，转成"去测试化的版式/字段模式"入训，不直接回灌测试图片
+outcome:
+  baseline_ref: null
+  delta: {入训原则: 去测试化模式，非原图}
+  protected_regression: null
+evidence_refs:
+  - [Qwen训练仓库]/docs/performance/2026-05-13-exp5-multimodal-badcase-taxonomy.md
+provenance: {source_revisions: [exp5 badcase taxonomy], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0027 JSONL 行数不等于唯一图片数
+
+```yaml
+case_id: CASE-0027
+run_ref: training-preflight-lessons
+fields: []
+layout: {document_type: mixed, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-ROW-VS-IMAGE-COUNT
+  symptom_metric: mode 扩展、负样本、上采样会让 JSONL 行数膨胀，误当图片数导致数据 admission 误判
+intervention: 数据 admission 区分 row count 与 unique image count，manifest 核对以实际图片数为准
+outcome:
+  baseline_ref: null
+  delta: null
+  protected_regression: null
+evidence_refs:
+  - [Qwen训练仓库]/docs/data/2026-08-05-training-preflight-lessons.md
+provenance: {source_revisions: [training-preflight-lessons], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0028 训练前置门禁链（8 门禁 + 顺序）
+
+```yaml
+case_id: CASE-0028
+run_ref: training-preflight-lessons
+fields: []
+layout: {document_type: mixed, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-PREFLIGHT-GATES
+  symptom_metric: 数据/生成/运行/训练问题事后无法分离，误归因模型训练（泄漏、字段面漂移、运行时挂载、checkpoint 误判混杂）
+intervention: 8 门禁顺序执行——SourceSnapshot → SplitPlanner → FieldContractGate → DistributionAudit → DataAdmissionGate → TestLock → RuntimeReceipt → CheckpointGate
+outcome:
+  baseline_ref: null
+  delta: {门禁候选: 8 个 ATF 需求}
+  protected_regression: null
+evidence_refs:
+  - [Qwen训练仓库]/docs/data/2026-08-05-training-preflight-lessons.md
+provenance: {source_revisions: [training-preflight-lessons], decision_ref: null, created_at: 2026-08-13}
 ```

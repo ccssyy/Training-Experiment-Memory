@@ -1,4 +1,4 @@
-# 首批 PatternClaim（18 条）
+# 首批 PatternClaim（22 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate / validated，依历史证据强度区分；见 schema 状态机）
 > `supported_by` 指向 `experience-cases.md`；`capability_tags`/`task_shape` 见 `capability-tags.md` 与 `schema.md`。
@@ -399,4 +399,100 @@ applicability:
   transfer_level: context
 supported_by: [CASE-0024]
 outcome_aggregate: {typical_delta: 贡献比 14.3:1 → 2.3:1, cost_range: 低, stability: 未验证模型指标}
+```
+
+---
+
+## 以下 CLAIM-0019~0022 来源：session-digests（数据工程/训练前置方法论）
+
+## CLAIM-0019 badcase 分类法（7 类错误 + 训练侧三分）
+
+```yaml
+claim_id: CLAIM-0019
+status: confirmed
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [badcase_taxonomy]
+problem_pattern: 仅看 badcase CSV 无法区分漏抽/误抽/字段混淆/边界/OCR/标签问题，难以定位根因
+intervention_strategy: 固定 7 类错误枚举 + 图片/GT/Predict/bbox 联合复核 + 训练侧三分（train yes/review/no）
+applicability:
+  preconditions: [字段级 badcase 分析]
+  contraindications: [无图片/bbox 证据时只能粗判]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0025]
+outcome_aggregate: {typical_delta: 漏抽占 61% 主导, cost_range: 中, stability: 高}
+```
+
+## CLAIM-0020 测试 badcase 去测试化后才能入训
+
+```yaml
+claim_id: CLAIM-0020
+status: validated            # 泄漏闭包决策，与 CLAIM-0008 cluster 留出一致
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [badcase_decontaminate]
+problem_pattern: 测试集 badcase 直接入训会造成泄漏，但全丢弃浪费诊断价值
+intervention_strategy: 只诊断/归纳规则，转成去测试化的版式/字段模式入训，不回灌测试图片
+applicability:
+  preconditions: [标准测试集 badcase 处理]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0026]
+outcome_aggregate: {typical_delta: 入训原则为去测试化模式, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0021 JSONL 行数不等于唯一图片数
+
+```yaml
+claim_id: CLAIM-0021
+status: confirmed
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [data_admission]
+problem_pattern: mode 扩展/负样本/上采样让 JSONL 行数膨胀，误当图片数导致 admission 误判
+intervention_strategy: 区分 row count 与 unique image count，manifest 以实际图片数为准
+applicability:
+  preconditions: [数据生成/admission 环节]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0027]
+outcome_aggregate: {typical_delta: null, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0022 训练前置门禁链（8 门禁 + 顺序）
+
+```yaml
+claim_id: CLAIM-0022
+status: confirmed
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [preflight_gates]
+problem_pattern: 数据/生成/运行/训练问题事后无法分离，误归因模型训练
+intervention_strategy: 8 门禁顺序执行——SourceSnapshot/SplitPlanner/FieldContractGate/DistributionAudit/DataAdmissionGate/TestLock/RuntimeReceipt/CheckpointGate
+applicability:
+  preconditions: [正式训练前置筛查]
+  contraindications: [快速 smoke 可跳过部分门禁]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0028]
+outcome_aggregate: {typical_delta: 8 个 ATF 需求候选, cost_range: 中, stability: 高}
 ```

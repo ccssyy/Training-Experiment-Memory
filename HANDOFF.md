@@ -33,8 +33,8 @@
 | memory/schema.md | 冻结 v1 schema（EvidenceEvent/Case/Claim/标签/状态机 + task_shape） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
 | memory/field-semantics.md | 字段语义词典 v2（三层通用结构：85 概念 × 16 单据 × 298 字段名归并） | candidate |
-| memory/experience-cases.md | 首批 ExperienceCase（24 条，绑证据；non_goods round3 6 + 早期训练 6） | candidate |
-| memory/pattern-claims.md | 首批 PatternClaim（18 条，聚合+失效边界；non_goods 3 + 早期训练 6） | candidate/confirmed/validated |
+| memory/experience-cases.md | 首批 ExperienceCase（28 条，绑证据；non_goods 6 + 早期训练 6 + 数据工程 4） | candidate |
+| memory/pattern-claims.md | 首批 PatternClaim（22 条，聚合+失效边界；non_goods 3 + 早期训练 6 + 数据工程 4） | candidate/confirmed/validated |
 
 ## 已定决策（勿重复讨论）
 
@@ -54,8 +54,8 @@
 **首批产出已完成**（见 `10-phase1-plan.md` 与 `memory/`）：
 - 冻结 schema v1（ExperienceCase + PatternClaim + 能力标签 + 状态机 + 字段类型标注）。
 - 通用能力标签初版（语义/值形态/基数关系/版式视觉 4 类）。
-- 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）+ non_goods round3 6 条 + 早期训练 6 条（空输出二分/标注口径迁移/late ckpt/页眉卖方/跨硬件/样本贡献比），共 24 条。
-- 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate）+ non_goods 3 条 + 早期训练 6 条，共 18 条（validated 5 + confirmed 4 + candidate 9）。
+- 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）+ non_goods round3 6 条 + 早期训练 6 条 + 数据工程 4 条（badcase 分类法/去测试化/行数口径/前置门禁），共 28 条。
+- 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate）+ non_goods 3 条 + 早期训练 6 条 + 数据工程 4 条，共 22 条（validated 6 + confirmed 7 + candidate 9）。
 - 字段语义词典 v2（三层通用结构：85 个 canonical 语义概念，从 16 单据 298 个字段名归并；值形态规则 7 条挂概念；两批单据命名差异表；未覆盖处理链路 + 概念状态机）。
 
 **未做 / 下一步**：
