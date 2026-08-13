@@ -352,15 +352,15 @@ checkpoint/eval closure
 
 ### 本地训练史
 
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-08-04-5goods-exp5-and-6other-exp4-complete-experiment-archive.md`
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-05-12-exp4-best-checkpoint-selection.md`
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-05-16-6other-po0512-regen-formal-gb-lr-scaling.md`
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-07-14-round2-10docs-badcase-analysis.md`
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-07-30-round5-and-7docs-cluster-id-ood-results.md`
-- `/data/sam/Qwen2.5-VL-main/docs/performance/2026-08-04-10docs-bypass-id-ood-complete-experiment-archive.md`
-- `/data/sam/Qwen2.5-VL-main/docs/data/2026-08-05-training-preflight-lessons.md`
-- `/data/sam/AgenticTrainingFlow/.worktrees/research-doc-parsing/docs/research/2026-07-24-document-kie-training-optimization.md`
-- `/data/sam/AgenticTrainingFlow/.worktrees/research-doc-parsing/docs/research/2026-07-24-document-kie-actionable-optimization.md`
+- `[Qwen训练仓库]/docs/performance/2026-08-04-5goods-exp5-and-6other-exp4-complete-experiment-archive.md`
+- `[Qwen训练仓库]/docs/performance/2026-05-12-exp4-best-checkpoint-selection.md`
+- `[Qwen训练仓库]/docs/performance/2026-05-16-6other-po0512-regen-formal-gb-lr-scaling.md`
+- `[Qwen训练仓库]/docs/performance/2026-07-14-round2-10docs-badcase-analysis.md`
+- `[Qwen训练仓库]/docs/performance/2026-07-30-round5-and-7docs-cluster-id-ood-results.md`
+- `[Qwen训练仓库]/docs/performance/2026-08-04-10docs-bypass-id-ood-complete-experiment-archive.md`
+- `[Qwen训练仓库]/docs/data/2026-08-05-training-preflight-lessons.md`
+- `[ATF仓库]/.worktrees/research-doc-parsing/docs/research/2026-07-24-document-kie-training-optimization.md`
+- `[ATF仓库]/.worktrees/research-doc-parsing/docs/research/2026-07-24-document-kie-actionable-optimization.md`
 
 ### 公开一手来源
 

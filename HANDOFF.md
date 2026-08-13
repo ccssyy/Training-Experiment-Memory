@@ -20,7 +20,7 @@
 | 03-task-profiling | 分层画像 L1-L4 + 字段语义匹配 + 向量 | 讨论稿（含决策记录） |
 | 04-architecture | 整体架构 + 模块级设计 + 独立化原则 | 讨论稿 |
 | 06-experience-cards | 首批经验卡（占位，待写） | 空 |
-| 07-colleague-synthesis | 综合同事 zito-atf-dev Preflight 设计 | 讨论稿 |
+| 07-colleague-synthesis | 综合同事 [同事项目] Preflight 设计 | 讨论稿 |
 | 08-object-model-and-hosting | Case+Claim 两层映射 + 承载决策 | 讨论稿 |
 | 09-hosting-and-source-correction | 承载修正 + Phase 1 素材主体（Qwen） | 讨论稿 |
 | 10-phase1-plan | Phase 1 执行切片（整理历史→Case/Claim/标签） | 执行计划 |
@@ -46,7 +46,7 @@
 6. **数据支持四维**：support / coverage / exposure / diversity。
 7. **迁移层级**：direct / structural / mechanism / context。
 8. **策略状态**：candidate / confirmed / validated / rejected / unresolved / superseded（confirmed=归因/诊断确认，validated=干预验证通过）。
-9. **仓库**：private，ccssyy/Training-Experiment-Memory；旧位置（ATF worktree 分支、本地 AutoTrainingFlow 目录）全部保留只读。
+9. **仓库**：public，[GitHub账号]/Training-Experiment-Memory；旧位置（ATF worktree 分支、本地 AutoTrainingFlow 目录）全部保留只读。敏感交接信息（SSH/路径/账号）已脱敏，真实值在本地 `.workbuddy/HANDOFF-secrets.md`（gitignore，不进公开仓库）。
 10. **不引入新事实 owner**：经验是独立存储通用对象，ATF 侧由 Decision Ledger 记录状态转换。
 
 ## Phase 1 进度（2026-08-13 更新）
@@ -91,11 +91,11 @@
 3. `session-digests/` 69 个（失败机制、踩坑、迭代决策）
 4. `analysis_outputs/` 50 个（badcase 分析、字段合同审计）
 5. `coding-brain` 11 Registry（已结构化历史索引）
-6. 补充：同事 `/data/chris/bea/repos/zito-atf-dev/tmp/non_goods_round3_analysis`
+6. 补充：同事 `[同事设计仓库]/tmp/non_goods_round3_analysis`
 
 ## 关键路径与账号
 
-- **A800 开发机**（SSH host 别名 `A800_5005`）：本仓库 `/data/sam/training-experience-memory`；Qwen 历史素材 `/data/sam/Qwen2.5-VL-main`；同事设计 `/data/chris/bea/repos/zito-atf-dev`。
+- **开发机**：本仓库 `[本仓库]`；Qwen 历史素材 `[Qwen训练仓库]`；同事设计 `[同事设计仓库]`。
 - **Mac 本地**：`~/Work/git/Training-Experiment-Memory`（workbuddy 开发工作区）。
-- **GitHub**：`ccssyy/Training-Experiment-Memory`（private，唯一 origin）。
-- A800 推 GitHub 用 `~/.ssh/id_ed25519_codingbrain`（已认证 ccssyy）；Mac 用 `~/.ssh/id_ed25519_github`。
+- **GitHub**：`[GitHub账号]/Training-Experiment-Memory`（public，唯一 origin）。
+- 推 GitHub 与 SSH 认证的真实配置见本地 `.workbuddy/HANDOFF-secrets.md`（gitignore，不进公开仓库）。

@@ -226,7 +226,7 @@ CodingBrain 失效原因分析：
 4. **生命周期**：observed/candidate/validated/superseded/expired 状态机。
 
 迁移策略：
-1. 盘点 ~/coding-brain 的 04_Registries（Issue/Experiment/Training Run/Metric/Dataset/Code Pattern Registry）和 03_Domains 中仍有效的条目，人工筛选后转换为经验卡（P1 阶段首批 20-30 张的来源之一）。
+1. 盘点 [知识库] 的 04_Registries（Issue/Experiment/Training Run/Metric/Dataset/Code Pattern Registry）和 03_Domains 中仍有效的条目，人工筛选后转换为经验卡（P1 阶段首批 20-30 张的来源之一）。
 2. coding-brain 只读保留为历史证据源（类似 Qwen 仓库的 source pin 角色），不再维护、不再 ingest。
 3. 项目 AGENTS.md 中的 CODINGBRAIN 区块移除，替换为新 memory 的说明。
 4. session-digests（.codex/session-digests/）继续作为"会话级临时沉淀"，经验卡是"跨会话验证级沉淀"，两者并存但层级不同。

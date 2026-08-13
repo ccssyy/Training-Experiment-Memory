@@ -19,7 +19,7 @@
 
 **承载方案（修正 v8 决策 3）**：
 - 首选：**独立 git 仓库**（本地 `git init` 立即可做，托管 remote 由你定 GitHub/公司 git）。
-- 过渡：至少先把文档迁到一个**独立目录**（如 `/data/sam/training-experience-memory/`），不再挂在 ATF worktree 下。
+- 过渡：至少先把文档迁到一个**独立目录**（如 `[本仓库]/`），不再挂在 ATF worktree 下。
 - ATF 侧：只保留一个"接入点"引用（未来 ATF 通过接口依赖 memory，而非同仓库）。
 
 ## 情况二：Phase 1 素材主体是 Qwen，不是同事 —— 确认属实
@@ -32,7 +32,7 @@ Qwen2.5-VL-main 才是历史训练记录的**真正主体**：
 - `.codex/session-digests/`：69 个会话摘要
 - `analysis_outputs/`：50 个分析输出
 - `docs/data|workflow|superpowers`：7+3+7
-- `~/coding-brain/04_Registries/`：11 个 Registry（Experiment/Training Run/Metric/Dataset/Issue/Decision/Feature/Model/Release/Requirement/Code Pattern）
+- `[知识库]/04_Registries/`：11 个 Registry（Experiment/Training Run/Metric/Dataset/Issue/Decision/Feature/Model/Release/Requirement/Code Pattern）
 
 同事的 `non_goods_round3_analysis` 只是其中一块补充（且同事刚加入训练）。
 

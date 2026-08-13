@@ -60,16 +60,16 @@ outcome_aggregate: {typical_delta, cost_range, stability}
 
 **检索与推荐用 PatternClaim（跨单据通用）；证据追溯用 ExperienceCase（回到具体 run）。** 这样"新单据 → 能力标签 → Claim 迁移"走得通，且每条结论都能落回具体证据。
 
-## 决策 3：承载位置（zito-atf-dev 不是 git 仓库）
+## 决策 3：承载位置（[同事项目] 不是 git 仓库）
 
 ### 3.1 事实澄清
 
-`/data/chris/bea/repos/zito-atf-dev/` **不是 git 仓库**（无 `.git`、无 remote、无 commit），是同事 chris 的**个人工作目录**，里面只有：
+`[同事设计仓库]/` **不是 git 仓库**（无 `.git`、无 remote、无 commit），是同事 [同事] 的**个人工作目录**，里面只有：
 - `docs/`：两份 Preflight 设计文档
 - `tmp/non_goods_round3_analysis/`：同事正在做的 non-goods round3 真实数据分析包（2878 张图、checkpoint-342、provenance、SPLITS.md）
 - `.codex/session-digests/`：会话摘要
 
-所以"memory 直接落在 zito-atf-dev 演进"这个选项**不成立**——那只是同事的草稿目录，不是可协作的正式仓库。
+所以"memory 直接落在 [同事项目] 演进"这个选项**不成立**——那只是同事的草稿目录，不是可协作的正式仓库。
 
 ### 3.2 承载选项
 
@@ -77,19 +77,19 @@ outcome_aggregate: {typical_delta, cost_range, stability}
 |---|---|---|
 | A. 独立新 git 仓库 | 新建 `training-experience-memory` 仓库，托管到 GitHub/公司 git | 最干净，符合"独立于 ATF"，但需新建+定托管 |
 | B. ATF 仓库独立子目录/worktree | 我们现在做的：ATF 分支下独立 worktree + 独立研究集目录 | 短期可行，但 memory 仍是 ATF 仓库的一部分 |
-| C. zito-atf-dev 目录 | 同事个人目录 | ❌ 非 git，不可协作 |
+| C. [同事项目] 目录 | 同事个人目录 | ❌ 非 git，不可协作 |
 
 ### 3.3 建议
 
 **短期（Phase 1 阶段）**：继续用现在的独立 worktree + 本地 `TrainingExperienceMemory/` 目录演进，因为 Phase 1 是"整理历史经验成 Case/Claim"，产出的主要是**文档 + 数据**，还没到必须独立仓库的程度。
 
-**中期（Phase 2 实现分析器前）**：升级为**独立 git 仓库**，ATF 和同事的 zito-atf-dev 都作为消费方接入。理由：memory 的代码（画像引擎/标签提炼/检索/回灌）要独立测试、独立发布，不能再寄生在 ATF 仓库。
+**中期（Phase 2 实现分析器前）**：升级为**独立 git 仓库**，ATF 和同事的 [同事项目] 都作为消费方接入。理由：memory 的代码（画像引擎/标签提炼/检索/回灌）要独立测试、独立发布，不能再寄生在 ATF 仓库。
 
 **同事工作的复用**：同事的 `tmp/non_goods_round3_analysis/`（真实 non-goods 数据 + provenance + checkpoint-342）是 Phase 1 整理 ExperienceCase 的**现成素材**——它已经把 round3 non-goods 的字段合同、split、badcase、指标都结构化好了，可以直接转成首批 ExperienceCase。
 
 ## 4. 结论
 
 - **决策 2**：experience-card 拆为 `ExperienceCase`（证据）+ `PatternClaim`（通用模式）两层，检索用 Claim、追溯用 Case。
-- **决策 3**：zito-atf-dev 非 git 仓库，不可作为承载；Phase 1 先在独立 worktree 演进，Phase 2 前升级独立 git 仓库；同事的 non_goods round3 分析包是 Phase 1 首批 Case 的现成素材。
+- **决策 3**：[同事项目] 非 git 仓库，不可作为承载；Phase 1 先在独立 worktree 演进，Phase 2 前升级独立 git 仓库；同事的 non_goods round3 分析包是 Phase 1 首批 Case 的现成素材。
 
 这两点确认后，即可正式进入 Phase 1：以同事 Preflight 框架（Case/Claim/标签/矩阵）+ 我们的向量/独立化为骨架，把 Qwen 历史归档 + 同事 non_goods 分析包整理成首批 ExperienceCase + PatternClaim。

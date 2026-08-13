@@ -1,7 +1,7 @@
-# 同事方案综合与统一设计（v7：与 zito-atf-dev Preflight 设计合并）
+# 同事方案综合与统一设计（v7：与 [同事项目] Preflight 设计合并）
 
 > 日期：2026-08-10 ｜ 状态：综合讨论稿
-> 来源：`/data/chris/bea/repos/zito-atf-dev/docs/`
+> 来源：`[同事设计仓库]/docs/`
 > - `training-capability-preflight.md`（设计理念，15KB）
 > - `training-capability-preflight-execution.md`（执行计划，660 行）
 
@@ -103,7 +103,7 @@ Phase 1 历史 memory 初始整理 → 2 Preflight 分析器 → 3 历史 Golden
 
 ## 2. 两边设计对照
 
-| 维度 | 同事方案（zito-atf-dev） | 我们 v1-v6 | 综合建议 |
+| 维度 | 同事方案（[同事项目]） | 我们 v1-v6 | 综合建议 |
 |---|---|---|---|
 | 抽象层 | ExperienceCase + PatternClaim 两层 | 经验卡一层 | **采用两层**：Case（证据）+ Claim（模式） |
 | 检索键 | 通用能力标签（语义/值形态/基数/版式） | 字段指纹+版式标签 | **标签体系为主体**，字段指纹作辅助键 |
@@ -115,7 +115,7 @@ Phase 1 历史 memory 初始整理 → 2 Preflight 分析器 → 3 历史 Golden
 | 冲突处理 | 6 类冲突显式处理 | 只提"冲突进裁决" | **采用 6 类冲突清单** |
 | 负知识 | rejected + unresolved 显式索引 | rejected 卡 | **补 unresolved** |
 | 回灌 | EvidenceEvent→Case→Claim 聚合 | candidate→validated/rejected | **采用同事链路** |
-| 独立化 | 未提（zito-atf-dev 是独立仓库雏形） | 独立系统 + 接入层 | **保持我们的独立化原则** |
+| 独立化 | 未提（[同事项目] 是独立仓库雏形） | 独立系统 + 接入层 | **保持我们的独立化原则** |
 | ATF 接入 | 未提 | 适配层设计 | **保持我们的接入设计** |
 | 向量/可视化 | 无 | 向量 + 图 | 保留 |
 | 联合训练决策 | 联合/条件联合/拆分三级 | 未提 | **采用** |
@@ -142,7 +142,7 @@ Phase 1 历史 memory 初始整理 → 2 Preflight 分析器 → 3 历史 Golden
 
 1. **框架主体**：以同事 Preflight（Case/Claim/标签/矩阵/状态机）为主体 + 我们的向量/独立化/ATF 接入，认同吗？
 2. **对象模型**：经验卡拆为 ExperienceCase + PatternClaim 两层——我们之前 schema 的 experience-card 如何映射？（建议：experience-card = PatternClaim 实例 + Case 引用集合）
-3. **与 ATF 关系**：同事的 zito-atf-dev 是独立仓库，与我们的"memory 独立于 ATF"方向一致——是否考虑 memory 直接落在 zito-atf-dev 演进，ATF 只接入？
+3. **与 ATF 关系**：同事的 [同事项目] 是独立仓库，与我们的"memory 独立于 ATF"方向一致——是否考虑 memory 直接落在 [同事项目] 演进，ATF 只接入？
 4. **下一步**：按同事 Phase 1（历史 memory 初始整理）还是先冻结我们的 schema ？
 
 ## 5. 附：同事文档与我们的研究集对应关系

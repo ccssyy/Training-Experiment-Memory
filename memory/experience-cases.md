@@ -1,7 +1,7 @@
 # 首批 ExperienceCase（24 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate，待 Phase 1 交叉验证后确认）
-> 证据来源：`docs/performance/`、`~/coding-brain/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `/data/sam/Qwen2.5-VL-main` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包；CASE-0019 起为 coding-brain Registry（4-5 月早期训练）。
+> 证据来源：`docs/performance/`、`[知识库]/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `[Qwen训练仓库]` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包；CASE-0019 起为 coding-brain Registry（4-5 月早期训练）。
 
 ---
 
@@ -243,8 +243,8 @@ outcome:
   delta: {有值样本占比 → 约 34%}
   protected_regression: 未验证副作用
 evidence_refs:
-  - ~/coding-brain/04_Registries/Issue Registry.md（ISS-20260428-cr-parcel-lowfreq）
-  - ~/coding-brain/04_Registries/Metric Registry.md
+  - [知识库]/04_Registries/Issue Registry.md（ISS-20260428-cr-parcel-lowfreq）
+  - [知识库]/04_Registries/Metric Registry.md
 provenance: {source_revisions: [CR parcel 5x], decision_ref: null, created_at: 2026-08-13}
 ```
 
@@ -396,8 +396,8 @@ outcome:
   delta: {可避免比例: CI 77% / BL 71% / Air 94% / PO 7% / CR 0%}
   protected_regression: null
 evidence_refs:
-  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260421-empty-source-split）
-  - ~/coding-brain/04_Registries/Metric Registry.md
+  - [知识库]/04_Registries/Experiment Registry.md（EXP-20260421-empty-source-split）
+  - [知识库]/04_Registries/Metric Registry.md
 provenance: {source_revisions: [0414_5_goods], decision_ref: null, created_at: 2026-08-13}
 ```
 
@@ -417,7 +417,7 @@ outcome:
   delta: {BL F1: -0.0646（口径迁移，非退化）}
   protected_regression: null
 evidence_refs:
-  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260507-bl-group-regression）
+  - [知识库]/04_Registries/Experiment Registry.md（EXP-20260507-bl-group-regression）
 provenance: {source_revisions: [0427/0506 BL], decision_ref: null, created_at: 2026-08-13}
 ```
 
@@ -437,7 +437,7 @@ outcome:
   delta: {ckpt1015 macro F1: 0.8537, weighted 0.8081}
   protected_regression: null
 evidence_refs:
-  - ~/coding-brain/04_Registries/Model Registry.md
+  - [知识库]/04_Registries/Model Registry.md
   - docs/performance/2026-05-12-exp4-best-checkpoint-selection.md
 provenance: {source_revisions: [exp4 5goods], decision_ref: null, created_at: 2026-08-13}
 ```
@@ -458,7 +458,7 @@ outcome:
   delta: {letterhead 卖方抬头: 45/82}
   protected_regression: null
 evidence_refs:
-  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260508-target-field-review）
+  - [知识库]/04_Registries/Experiment Registry.md（EXP-20260508-target-field-review）
 provenance: {source_revisions: [0506_6_others], decision_ref: null, created_at: 2026-08-13}
 ```
 
@@ -478,8 +478,8 @@ outcome:
   delta: {BW1000 吞吐: A800 的 80%}
   protected_regression: null
 evidence_refs:
-  - ~/coding-brain/04_Registries/Training Run Registry.md
-  - ~/coding-brain/04_Registries/Decision Registry.md（跨硬件分层表达）
+  - [知识库]/04_Registries/Training Run Registry.md
+  - [知识库]/04_Registries/Decision Registry.md（跨硬件分层表达）
 provenance: {source_revisions: [0428 五类货描], decision_ref: null, created_at: 2026-08-13}
 ```
 
@@ -499,7 +499,7 @@ outcome:
   delta: {贡献比: 14.3:1 → 2.3:1}
   protected_regression: 未验证模型指标
 evidence_refs:
-  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260423-5goods-balance）
-  - ~/coding-brain/04_Registries/Dataset Registry.md
+  - [知识库]/04_Registries/Experiment Registry.md（EXP-20260423-5goods-balance）
+  - [知识库]/04_Registries/Dataset Registry.md
 provenance: {source_revisions: [0423_5_goods_balanced], decision_ref: null, created_at: 2026-08-13}
 ```

@@ -13,7 +13,7 @@
 
 | 优先级 | 素材 | 数量 | 用途 |
 |---|---|---|---|
-| P0 | `~/coding-brain/04_Registries/` 11 个 Registry | 692 行 | 已结构化的 Issue/Decision/Metric/Run 索引，**Case 的直接来源** |
+| P0 | `[知识库]/04_Registries/` 11 个 Registry | 692 行 | 已结构化的 Issue/Decision/Metric/Run 索引，**Case 的直接来源** |
 | P0 | `docs/performance/` 实验报告 | 21 份 | 策略与指标结论，**Claim 的直接来源** |
 | P1 | `analysis_outputs/` 分析输出 | 50 个 | badcase 分析、字段合同审计、泄漏闭包（装箱单机制量化） |
 | P1 | `.codex/session-digests/` 会话摘要 | 69 个 | 失败机制、踩坑、迭代决策（补 Case 的"为什么"） |
