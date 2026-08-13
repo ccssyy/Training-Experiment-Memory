@@ -23,6 +23,11 @@
 | 07-colleague-synthesis | 综合同事 zito-atf-dev Preflight 设计 | 讨论稿 |
 | 08-object-model-and-hosting | Case+Claim 两层映射 + 承载决策 | 讨论稿 |
 | 09-hosting-and-source-correction | 承载修正 + Phase 1 素材主体（Qwen） | 讨论稿 |
+| 10-phase1-plan | Phase 1 执行切片（整理历史→Case/Claim/标签） | 执行计划 |
+| memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机） | 冻结 |
+| memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
+| memory/experience-cases.md | 首批 ExperienceCase（12 条，绑证据） | candidate |
+| memory/pattern-claims.md | 首批 PatternClaim（9 条，聚合+失效边界） | candidate/validated |
 
 ## 已定决策（勿重复讨论）
 
@@ -37,9 +42,23 @@
 9. **仓库**：private，ccssyy/Training-Experiment-Memory；旧位置（ATF worktree 分支、本地 AutoTrainingFlow 目录）全部保留只读。
 10. **不引入新事实 owner**：经验是独立存储通用对象，ATF 侧由 Decision Ledger 记录状态转换。
 
+## Phase 1 进度（2026-08-13 更新）
+
+**首批产出已完成**（见 `10-phase1-plan.md` 与 `memory/`）：
+- 冻结 schema v1（ExperienceCase + PatternClaim + 能力标签 + 状态机）。
+- 通用能力标签初版（语义/值形态/基数关系/版式视觉 4 类）。
+- 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）。
+- 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate，含失效边界）。
+
+**未做 / 下一步**：
+1. 字段语义词典初版（别名表 + 值形态规则，来自装箱单字段合同审计 `analysis_outputs/20260805_full_field_contract_audit.md`）。
+2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（本批只挑了证据最清晰的 12 条 Case）。
+3. 同事 `non_goods_round3_analysis`（checkpoint-342 + provenance）尚未转成 non_goods 专属 Case。
+4. Phase 2（画像引擎/检索引擎）实现切片待定。
+
 ## 下一步：Phase 1（整理历史 → ExperienceCase/PatternClaim）
 
-以 **Qwen2.5-VL-main 历史归档为主体**，同事 non_goods round3 为补充，产出首批 ExperienceCase + PatternClaim + 通用能力标签初版。
+以 **Qwen2.5-VL-main 历史归档为主体**，同事 non_goods round3 为补充，产出首批 ExperienceCase + PatternClaim + 通用能力标签初版（**首批已产出，见上**）。
 
 素材优先级：
 1. `docs/performance/` 21 份报告（策略与指标结论 → PatternClaim 直接来源）
