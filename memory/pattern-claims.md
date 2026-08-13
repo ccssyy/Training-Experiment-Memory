@@ -1,4 +1,4 @@
-# 首批 PatternClaim（9 条）
+# 首批 PatternClaim（12 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate / validated，依历史证据强度区分；见 schema 状态机）
 > `supported_by` 指向 `experience-cases.md`；`capability_tags` 见 `capability-tags.md`。
@@ -192,4 +192,71 @@ applicability:
   transfer_level: context
 supported_by: [CASE-0011]
 outcome_aggregate: {typical_delta: 污染结果只作历史追溯, cost_range: 低, stability: 高}
+```
+
+---
+
+## 以下 CLAIM-0010~0012 来源：同事 non_goods round3 分析包
+
+## CLAIM-0010 non_goods 多字段同值冒充
+
+```yaml
+claim_id: CLAIM-0010
+status: candidate
+capability_tags:
+  semantic: [bank, identifier, party]
+  value_shape: [code_value, short_text]
+  cardinality: [single_value, multi_value]
+  layout: [multi_block]
+problem_pattern: non_goods 银行/编号/份数字段易复用同一值+bbox（同值跨字段冒充）
+intervention_strategy: 字段级排他/互斥约束 + 值唯一性检查（同值同 bbox 只允许命中单一字段）；排他对：issuing_bank↔available_with、beneficiary_bank↔beneficiary_account、reference↔order_number、document_no↔reference_no↔swb_id
+applicability:
+  preconditions: [多字段同语义域密集单据（银行/编号/份数）]
+  contraindications: [合法共用的共享值需人工豁免]
+  confidence: medium
+  transfer_level: mechanism
+supported_by: [CASE-0013, CASE-0018]
+outcome_aggregate: {typical_delta: 明确复现 5 张/24 张, cost_range: 低, stability: 未验证}
+```
+
+## CLAIM-0011 checkbox/份数类字段易幻觉
+
+```yaml
+claim_id: CLAIM-0011
+status: candidate
+capability_tags:
+  semantic: [term, status]
+  value_shape: [numeric_value, short_text]
+  cardinality: [single_value]
+  layout: [multi_block]
+problem_pattern: checkbox/份数/存在性字段在无值时易输出 0 或错误值，违背"无值不出 key"
+intervention_strategy: 存在性字段的"无值不出 key"约束 + 份数字段严格取文档份数词（如 B/L、COPIES）而非业务编号
+applicability:
+  preconditions: [checkbox/份数/存在性字段（aco 托收申请、随附单据清单）]
+  contraindications: [数值型字段不适用]
+  confidence: medium
+  transfer_level: structural
+supported_by: [CASE-0014]
+outcome_aggregate: {typical_delta: aco badcase 522 行（含此类）, cost_range: 低, stability: 未验证}
+```
+
+## CLAIM-0012 当事人字段漏抽与混淆
+
+```yaml
+claim_id: CLAIM-0012
+status: candidate
+capability_tags:
+  semantic: [party]
+  value_shape: [short_text]
+  cardinality: [single_value, multi_value]
+  layout: [multi_block]
+problem_pattern: 当事人字段（buyer/consignee）在多区块版式易漏抽或混淆；group 内锚点字段（goods_name）易整组漏抽
+intervention_strategy: 当事人字段按引导词独立定位（Buyer/Consignee/Ship To）+ 互斥去重；group 锚点字段（goods_name）纳入行级完整性校验
+applicability:
+  preconditions: [多区块版式单据（pi/so 等），存在 buyer↔consignee 同现]
+  contraindications: [单当事人单据不适用]
+  confidence: medium
+  transfer_level: mechanism
+supported_by: [CASE-0015, CASE-0016]
+outcome_aggregate: {typical_delta: pi F1 0.6320（最低）/ so 漏 goods_name, cost_range: 低, stability: 未验证}
 ```

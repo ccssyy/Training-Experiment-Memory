@@ -27,8 +27,8 @@
 | memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机，含字段类型标注） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
 | memory/field-semantics.md | 字段语义词典 v2（三层通用结构：85 概念 × 16 单据 × 298 字段名归并） | candidate |
-| memory/experience-cases.md | 首批 ExperienceCase（12 条，绑证据） | candidate |
-| memory/pattern-claims.md | 首批 PatternClaim（9 条，聚合+失效边界） | candidate/validated |
+| memory/experience-cases.md | 首批 ExperienceCase（18 条，绑证据；含 non_goods round3 6 条） | candidate |
+| memory/pattern-claims.md | 首批 PatternClaim（12 条，聚合+失效边界；含 non_goods 3 条） | candidate/validated |
 
 ## 已定决策（勿重复讨论）
 
@@ -48,14 +48,14 @@
 **首批产出已完成**（见 `10-phase1-plan.md` 与 `memory/`）：
 - 冻结 schema v1（ExperienceCase + PatternClaim + 能力标签 + 状态机 + 字段类型标注）。
 - 通用能力标签初版（语义/值形态/基数关系/版式视觉 4 类）。
-- 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）。
-- 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate，含失效边界）。
+- 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）+ non_goods round3 6 条（同值冒充/checkbox 幻觉/当事人漏抽/group 锚点漏抽/单价漏归组/字段幻觉），共 18 条。
+- 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate，含失效边界）+ non_goods 3 条（同值冒充/checkbox 幻觉/当事人漏抽），共 12 条。
 - 字段语义词典 v2（三层通用结构：85 个 canonical 语义概念，从 16 单据 298 个字段名归并；值形态规则 7 条挂概念；两批单据命名差异表；未覆盖处理链路 + 概念状态机）。
 
 **未做 / 下一步**：
 1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化、概念向量锚（Phase 2）。
-2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（本批只挑了证据最清晰的 12 条 Case）。
-3. 同事 `non_goods_round3_analysis`（checkpoint-342 + provenance）尚未转成 non_goods 专属 Case。
+2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（Qwen 侧 12 条 + non_goods 6 条已挑，其余待补）。
+3. ~~同事 `non_goods_round3_analysis` 转 non_goods 专属 Case~~ ✅ 已转 6 Case + 3 Claim。
 4. Phase 2（画像引擎/检索引擎）实现切片待定。
 
 ## 下一步：Phase 1（整理历史 → ExperienceCase/PatternClaim）

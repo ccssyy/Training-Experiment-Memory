@@ -1,7 +1,7 @@
-# 首批 ExperienceCase（12 条）
+# 首批 ExperienceCase（18 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate，待 Phase 1 交叉验证后确认）
-> 证据来源：`docs/performance/`、`~/coding-brain/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `/data/sam/Qwen2.5-VL-main` 相对路径）。
+> 证据来源：`docs/performance/`、`~/coding-brain/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `/data/sam/Qwen2.5-VL-main` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包（`/data/chris/bea/repos/zito-atf-dev/tmp/non_goods_round3_analysis/`）。
 
 ---
 
@@ -246,4 +246,132 @@ evidence_refs:
   - ~/coding-brain/04_Registries/Issue Registry.md（ISS-20260428-cr-parcel-lowfreq）
   - ~/coding-brain/04_Registries/Metric Registry.md
 provenance: {source_revisions: [CR parcel 5x], decision_ref: null, created_at: 2026-08-13}
+```
+
+---
+
+## 以下 CASE-0013~0018 来源：同事 non_goods round3 分析包（checkpoint-342）
+
+## CASE-0013 non_goods 多字段同值冒充（跨字段复用同值同 bbox）
+
+```yaml
+case_id: CASE-0013
+run_ref: round3 non-goods checkpoint-342（vLLM 0.16 no-tower 双 LoRA）
+fields: [issuing_bank, available_with, collection_bank_nan, beneficiary_bank, beneficiary_account, reference, order_number, document_no, reference_no, swb_id]
+layout: {document_type: mixed_non_goods, cluster: null, page_role: multi_block}
+problem:
+  pattern_id: NG-SAME-VALUE-CROSS-FIELD
+  symptom_metric: 多字段输出完全相同的值+bbox——aco issuing_bank=available_with=collection_bank_nan(BANK OF NINGBO)；pi beneficiary_bank=beneficiary_account(同一 IBAN)；pi reference=order_number(PO-BC-001024)；swb document_no=reference_no=swb_id(NAM7900733)
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: {round3 non-goods F1: 0.8044}
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（逐图判定：1649d108/61b23e31/9ace41a4/0144fb97 明确复现）
+  - records/round3_eval/ROUND3_HANDOFF.md
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0014 checkbox/份数字段幻觉（无值输出 0 或错误值）
+
+```yaml
+case_id: CASE-0014
+run_ref: round3 non-goods checkpoint-342
+fields: [certification_of_origi, original_bl, commercial_invoice, customs_invoice, insurance_policy, draft]
+layout: {document_type: aco, cluster: null, page_role: multi_block}
+problem:
+  pattern_id: NG-CHECKBOX-HALLUCINATION
+  symptom_metric: 份数/checkbox 字段错配——certification_of_origi=B/L、original_bl=125100148...；多个缺失/checkbox 字段输出 0，违背"无值不出 key"
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: {aco F1: 0.8565, badcase 522 行}
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（0885e398 部分复现）
+  - records/round3_eval/ROUND3_HANDOFF.md（aco 优先级 2）
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0015 形式发票漏 buyer/buyer_address（当事人混淆）
+
+```yaml
+case_id: CASE-0015
+run_ref: round3 non-goods checkpoint-342
+fields: [buyer, buyer_address, consignee, consignee_address]
+layout: {document_type: proforma_invoice, cluster: pi, page_role: multi_block}
+problem:
+  pattern_id: NG-PARTY-OMISSION
+  symptom_metric: 非货描输出无 buyer/buyer_address，只输出 consignee/consignee_address
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: {pi F1: 0.6320（10 单据最低）, badcase 158 行}
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（0b63a76d 明确复现）
+  - records/round3_eval/ROUND3_HANDOFF.md（pi 优先级 4）
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0016 销售订单 group 缺 goods_name
+
+```yaml
+case_id: CASE-0016
+run_ref: round3 non-goods checkpoint-342
+fields: [goods_name]
+layout: {document_type: sales_order, cluster: so, page_role: dense_table}
+problem:
+  pattern_id: NG-GROUP-FIELD-OMISSION
+  symptom_metric: 10 个 group 全部缺少 goods_name（前两行漏抽，范围更大）
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: {so F1: 0.8575, badcase 112 行}
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（3471b630 部分复现）
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0017 多行单价漏归组
+
+```yaml
+case_id: CASE-0017
+run_ref: round3 non-goods checkpoint-342
+fields: [price_of_goods]
+layout: {document_type: proforma_invoice, cluster: pi, page_role: dense_table}
+problem:
+  pattern_id: NG-PRICE-ROW-UNGROUPED
+  symptom_metric: 4 条明细的 quantity/amount 已逐行抽取，但单价只输出 1 个独立 price_of_goods=USD 19.00，未逐行归组
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: null
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（33737a32 部分复现）
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0018 海运单字段幻觉（从错误区域取值）
+
+```yaml
+case_id: CASE-0018
+run_ref: round3 non-goods checkpoint-342
+fields: [freight_payable_at, document_no, container_no]
+layout: {document_type: sea_waybill, cluster: swb, page_role: multi_block}
+problem:
+  pattern_id: NG-FIELD-HALLUCINATION
+  symptom_metric: freight_payable_at=NAGOYA;JAPAN 从其他港口/地点区域冒出（图内 Freight Payable 区域无该值）；container_no 被 non-goods 同 bbox 复用为 document_no
+intervention: 无（失败观察）
+outcome:
+  baseline_ref: null
+  delta: {swb F1: 0.8213, badcase 301 行}
+  protected_regression: null
+evidence_refs:
+  - records/round3_badcase_recheck/report.md（020223e3/07944f15 部分复现）
+  - records/round3_eval/ROUND3_HANDOFF.md（swb 优先级 3）
+provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
 ```
