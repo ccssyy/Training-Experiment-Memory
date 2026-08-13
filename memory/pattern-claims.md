@@ -1,4 +1,4 @@
-# 首批 PatternClaim（22 条）
+# 首批 PatternClaim（26 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate / validated，依历史证据强度区分；见 schema 状态机）
 > `supported_by` 指向 `experience-cases.md`；`capability_tags`/`task_shape` 见 `capability-tags.md` 与 `schema.md`。
@@ -495,4 +495,100 @@ applicability:
   transfer_level: context
 supported_by: [CASE-0028]
 outcome_aggregate: {typical_delta: 8 个 ATF 需求候选, cost_range: 中, stability: 高}
+```
+
+---
+
+## 以下 CLAIM-0023~0026 来源：round5 完整归档 + round3 训练包 digest
+
+## CLAIM-0023 非货描 ID/OOD 迁移弱于货描
+
+```yaml
+claim_id: CLAIM-0023
+status: confirmed
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [lane_migration]
+problem_pattern: 货描与非货描的 ID/OOD 迁移能力不对称——货描强迁移，非货描弱迁移（精确率升、召回降）
+intervention_strategy: 按 lane 分开设预期与回退保护；非货描迁移需重点盯召回和重量/提货单字段回归
+applicability:
+  preconditions: [ID/OOD 迁移评测]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0029]
+outcome_aggregate: {typical_delta: 货描 +0.2412 / 非货描 +0.0649, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0024 content-level 重叠使历史指标只能标 as-run
+
+```yaml
+claim_id: CLAIM-0024
+status: validated            # 泄漏闭包，与 CLAIM-0008 一致
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [leakage_caliber]
+problem_pattern: 同图片内容、不同文件名/标签序列化的 content-level 重叠，使历史指标带泄漏
+intervention_strategy: 泄漏检测用 content hash（image_sha256），历史指标标注 as-run 口径，不当严格泛化指标
+applicability:
+  preconditions: [历史指标口径判定]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0030]
+outcome_aggregate: {typical_delta: 货描 75/482、非货描 65/485 重叠, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0025 训练配置冻结用 package-level 残差比较（非单点断言）
+
+```yaml
+claim_id: CLAIM-0025
+status: validated            # RED/GREEN 负例证明
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [config_freeze]
+problem_pattern: 跨轮单变量训练实验的配置冻结，单点断言防不住相邻配置漂移（fail-open）
+intervention_strategy: 从冻结基线出发做 package-level 白名单残差比较 + 负例矩阵证明拒绝路径
+applicability:
+  preconditions: [跨轮训练包配置冻结]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0031]
+outcome_aggregate: {typical_delta: 17 项负例矩阵、20 passed, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0026 多机启动合同要传播到每个 remote rank + 单一身份 resolver
+
+```yaml
+claim_id: CLAIM-0026
+status: validated            # 168→181 测试通过
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [multinode_contract]
+problem_pattern: 多机 smoke 只在 coordinator 限参数、launcher/child 各自派生身份，导致合同传播遗漏与 dry/实际 preflight 分叉
+intervention_strategy: RUN_MODE 状态机 + remote rank 合同全字段传播 + launcher/child 单一 resolver + collision guard（output/log/PID）
+applicability:
+  preconditions: [多机训练启动]
+  contraindications: [单机不适用]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0032]
+outcome_aggregate: {typical_delta: 181 测试通过, cost_range: 低, stability: 高}
 ```

@@ -9,8 +9,8 @@
 | `schema.md` | 冻结 schema：ExperienceCase / PatternClaim / 能力标签 / 状态机 | 冻结 v1 |
 | `capability-tags.md` | 通用能力标签初版（语义 17 + 值形态 8 + 基数 7 + 版式 8） | candidate |
 | `field-semantics.md` | 字段语义词典 v2（85 概念 × 16 单据 × 298 字段名归并） | candidate |
-| `experience-cases.md` | 首批 ExperienceCase（28 条，绑证据；non_goods 6 + 早期训练 6 + 数据工程 4） | candidate |
-| `pattern-claims.md` | 首批 PatternClaim（22 条，聚合 + 失效边界；non_goods 3 + 早期训练 6 + 数据工程 4） | candidate/confirmed/validated |
+| `experience-cases.md` | 首批 ExperienceCase（32 条，绑证据；non_goods 6 + 早期训练 6 + 数据工程 4 + 训练工程 4） | candidate |
+| `pattern-claims.md` | 首批 PatternClaim（26 条，聚合 + 失效边界；non_goods 3 + 早期训练 6 + 数据工程 4 + 训练工程 4） | candidate/confirmed/validated |
 
 ## 关系
 

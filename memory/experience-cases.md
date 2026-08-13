@@ -1,4 +1,4 @@
-# 首批 ExperienceCase（28 条）
+# 首批 ExperienceCase（32 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate，待 Phase 1 交叉验证后确认）
 > 证据来源：`docs/performance/`、`[知识库]/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `[Qwen训练仓库]` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包；CASE-0019 起为 coding-brain Registry（4-5 月早期训练）。
@@ -586,4 +586,89 @@ outcome:
 evidence_refs:
   - [Qwen训练仓库]/docs/data/2026-08-05-training-preflight-lessons.md
 provenance: {source_revisions: [training-preflight-lessons], decision_ref: null, created_at: 2026-08-13}
+```
+
+---
+
+## 以下 CASE-0029~0032 来源：round5 完整归档 + round3 训练包 digest
+
+## CASE-0029 非货描 ID/OOD 迁移弱于货描
+
+```yaml
+case_id: CASE-0029
+run_ref: 20260728_7docs_cluster_id_ood_pilot_v1
+fields: [total_net_weight, total_gross_weight]
+layout: {document_type: mixed_7docs, cluster: id/ood_core/ood_tail, page_role: null}
+problem:
+  pattern_id: PL-LANE-MIGRATION-ASYMMETRY
+  symptom_metric: 货描 micro F1 +0.2412 全分区提升无单据回退；非货描只 +0.0649，召回 0.5982→0.5643，提货单 0.4372→0.3333，重量字段回退
+intervention: 无（观察，lane 迁移能力不对称）
+outcome:
+  baseline_ref: base 模型
+  delta: {货描: +0.2412, 非货描: +0.0649, 非货描召回: -0.0339}
+  protected_regression: 非货描重量字段/提货单回退
+evidence_refs:
+  - [Qwen训练仓库]/docs/performance/2026-08-04-10docs-bypass-id-ood-complete-experiment-archive.md
+provenance: {source_revisions: [7docs id/ood pilot data_v2], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0030 content-level 重叠导致指标只能标 as-run
+
+```yaml
+case_id: CASE-0030
+run_ref: 5goods-exp5 / 6other-exp4 完整归档
+fields: []
+layout: {document_type: mixed, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-CONTENT-LEVEL-OVERLAP
+  symptom_metric: 两组 source snapshot 存在"同图片内容、不同文件名/标签序列化"重叠——货描 75/482、非货描 65/485
+intervention: 历史指标标注 as-run 口径，不当严格无泄漏泛化指标
+outcome:
+  baseline_ref: null
+  delta: {重叠: 货描 75/482, 非货描 65/485}
+  protected_regression: null
+evidence_refs:
+  - [Qwen训练仓库]/docs/performance/2026-08-04-5goods-exp5-and-6other-exp4-complete-experiment-archive.md
+provenance: {source_revisions: [exp5/exp4 archive], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0031 训练配置单点断言失效（fail-open）
+
+```yaml
+case_id: CASE-0031
+run_ref: round3-training-package-invariant
+fields: []
+layout: {document_type: mixed, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-CONFIG-DRIFT-FAIL-OPEN
+  symptom_metric: goods video_max_pixels 从冻结 65536 漂移为 65516，旧 targeted test 仍 1 passed（只抽查少数 flag）
+intervention: package-level 白名单残差比较 + 17 项负例矩阵（RED 1 failed → GREEN 20 passed）
+outcome:
+  baseline_ref: 第二轮 package
+  delta: {负例矩阵: 17 项, 测试: 20 passed}
+  protected_regression: null
+evidence_refs:
+  - round3-training-package-invariant.md（session-digest）
+provenance: {source_revisions: [round3 training package], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0032 多机 smoke 合同传播遗漏 + launcher/child 身份分叉
+
+```yaml
+case_id: CASE-0032
+run_ref: round3-smoke-launch-contract + goods-smoke-mode-identity
+fields: []
+layout: {document_type: mixed, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-MULTINODE-CONTRACT-PROPAGATION
+  symptom_metric: non_goods coordinator 未把 one-step/SwanLab/resume/端口传给 remote rank；goods launcher 与 child 各自派生 output 路径，dry plan 与实际 preflight 不一致
+intervention: RUN_MODE 状态机 + remote rank 合同传播 + launcher/child 单一 resolver + collision guard（168→181 passed）
+outcome:
+  baseline_ref: null
+  delta: {测试: 181 passed, 负例: 13 失败→通过}
+  protected_regression: null
+evidence_refs:
+  - round3-smoke-launch-contract.md（session-digest）
+  - round3-goods-smoke-mode-identity.md（session-digest）
+provenance: {source_revisions: [round3 training package], decision_ref: null, created_at: 2026-08-13}
 ```
