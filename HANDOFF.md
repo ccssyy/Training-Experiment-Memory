@@ -25,8 +25,10 @@
 | 09-hosting-and-source-correction | 承载修正 + Phase 1 素材主体（Qwen） | 讨论稿 |
 | 10-phase1-plan | Phase 1 执行切片（整理历史→Case/Claim/标签） | 执行计划 |
 | 11-phase2-plan | Phase 2 实现切片（画像引擎 + 规则检索 MVP） | 执行计划 |
+| 12-phase3-plan | Phase 3 实现切片（回灌闭环框架 Postflight） | 执行计划 |
 | phase2/ | 画像引擎/检索器/建议卡代码 + 机器可读数据 + FINDINGS | 已跑通 |
-| memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机 + task_shape 任务形态维度） | 冻结 |
+| phase3/ | 回灌引擎 curator + EvidenceEvent + 验证门槛 + dry-run | 已跑通 |
+| memory/schema.md | 冻结 v1 schema（EvidenceEvent/Case/Claim/标签/状态机 + task_shape） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
 | memory/field-semantics.md | 字段语义词典 v2（三层通用结构：85 概念 × 16 单据 × 298 字段名归并） | candidate |
 | memory/experience-cases.md | 首批 ExperienceCase（24 条，绑证据；non_goods round3 6 + 早期训练 6） | candidate |
@@ -58,7 +60,16 @@
 1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化（区分重量/计数单位）、概念向量锚（P4）。
 2. 剩余素材的批量整理：coding-brain 已穷尽（11 Registry 全转）；docs/performance 剩余约 10 份报告 + session-digests 69 个 + runs 104 个尚未系统读（可借 profiler 半自动化提炼）。
 3. ~~同事 `non_goods_round3_analysis` 转 non_goods 专属 Case~~ ✅ 已转 6 Case + 3 Claim。
-4. ~~Phase 2-MVP（画像引擎 + 规则检索）~~ ✅ 已跑通（见 `11-phase2-plan.md` + `phase2/`），结构反馈见 `phase2/FINDINGS.md`。
+4. ~~Phase 2-MVP（画像引擎 + 规则检索）~~ ✅ 已跑通。
+5. ~~Phase 3 回灌闭环框架（Postflight curator）~~ ✅ 已跑通（见 `12-phase3-plan.md` + `phase3/`），结构反馈见 `phase3/FINDINGS.md`。
+
+## Phase 3 回灌闭环（已跑通，零 GPU 框架）
+
+回灌链路 `EvidenceEvent → candidate Case/Claim → 验证门槛 → 状态机转换` 已实现（`phase3/`），dry-run 4 场景通过（validated / rejected / confirmed / blocked）。结构反馈（`phase3/FINDINGS.md`）：
+- **F5（已修）**：EvidenceEvent.metrics 缺退化矩阵 → 补 `degradation` + `improved`。
+- **F6（已修）**：evaluator 缺 leakage/adapter_missing/fake → 补 3 字段。
+- **F7（已修）**：缺 kind 维度 → 加 `kind: intervention | diagnostic`。
+- 边界：真正回灌需 GPU 训练验证；本切片只交付框架 + 历史 dry-run。
 
 ## Phase 2-MVP 结构反馈（重点，堆量前先看）
 
