@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "训练经验完整闭环",
+    "subtitle": "训练前推荐 → 训练 → 训练后回灌 → 写回记忆库 → 下次再命中",
+    "output": "feedback-loop.html",
+    "viewBox": [1080, 720]
+  },
+  "stages": [
+    { "label": "训练前 · Preflight" },
+    { "label": "训练" },
+    { "label": "训练后 · Postflight" },
+    { "label": "记忆库" }
+  ],
+  "nodes": [
+    { "id": "new_task", "type": "frontend", "label": "新任务", "sublabel": "字段定义 + 样例", "stage": 0, "row": 0, "tag": "输入" },
+    { "id": "profiler", "type": "backend", "label": "画像引擎", "sublabel": "字段→概念→标签", "stage": 0, "row": 2, "tag": "只读" },
+    { "id": "advisor", "type": "backend", "label": "建议卡", "sublabel": "top-k Claim", "stage": 0, "row": 4, "tag": "只建议" },
+    { "id": "training", "type": "backend", "label": "训练 + 评估", "sublabel": "施加建议", "stage": 1, "row": 2, "tag": "验证" },
+    { "id": "badcase", "type": "backend", "label": "badcase 分析", "sublabel": "EvidenceEvent", "stage": 2, "row": 1, "tag": "事实" },
+    { "id": "gate", "type": "security", "label": "验证门槛", "sublabel": "7 项 / 8 类", "stage": 2, "row": 3, "tag": "人工验收" },
+    { "id": "store", "type": "database", "label": "记忆库", "sublabel": "Case / Claim", "stage": 3, "row": 2, "tag": "写回" }
+  ],
+  "flows": [
+    { "from": "new_task", "to": "profiler", "label": "任务素材", "classification": "输入", "variant": "emphasis", "route": "straight", "labelAt": [156, 271] },
+    { "from": "profiler", "to": "advisor", "label": "画像", "classification": "只读", "variant": "emphasis", "route": "straight", "labelAt": [156, 499] },
+    { "from": "advisor", "to": "training", "label": "建议卡", "classification": "候选策略", "variant": "emphasis", "route": "straight" },
+    { "from": "training", "to": "badcase", "label": "评估结果", "classification": "指标 + badcase", "variant": "default", "route": "straight" },
+    { "from": "badcase", "to": "gate", "label": "candidate", "classification": "待验证", "variant": "default", "route": "straight", "labelAt": [530, 385] },
+    { "from": "gate", "to": "store", "label": "写回", "classification": "validated/confirmed", "variant": "emphasis", "route": "straight" },
+    { "from": "store", "to": "profiler", "label": "历史经验", "classification": "闭环返回", "variant": "dashed", "fromSide": "bottom", "toSide": "bottom", "via": [[801, 299], [801, 620], [156, 620], [156, 299]], "labelAt": [470, 620] }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "主路径", "items": ["训练前只读：画像 → 检索 → 建议卡", "训练后回灌：badcase → candidate → 验证 → 写回", "闭环：写回的记忆下次训练前再命中"] },
+    { "dot": "rose", "title": "安全闸", "items": ["回灌永停人工验收闸", "validated 需 7 项全过，rejected 作负经验", "缺证据 block，不入库"] }
+  ]
+}

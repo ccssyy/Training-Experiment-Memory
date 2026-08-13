@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "训练经验 Memory 系统架构",
+    "subtitle": "独立于消费方的通用训练经验系统 · 单向依赖（消费方 → 核心，核心不 import 消费方）",
+    "output": "system-architecture.html"
+  },
+  "components": [
+    { "id": "atf", "type": "external", "label": "ATF", "sublabel": "首个消费方", "pos": [40, 150], "size": [130, 60] },
+    { "id": "cli", "type": "external", "label": "CLI / Web", "sublabel": "未来消费方", "pos": [40, 280], "size": [130, 60] },
+    { "id": "other", "type": "external", "label": "其他工具", "sublabel": "未来接入", "pos": [40, 410], "size": [130, 60] },
+
+    { "id": "adapter", "type": "backend", "label": "接入层", "sublabel": "适配接口", "pos": [250, 280], "size": [150, 60] },
+
+    { "id": "profiler", "type": "backend", "label": "画像引擎", "sublabel": "profilers · L1-L4", "pos": [480, 90], "size": [150, 56] },
+    { "id": "retriever", "type": "backend", "label": "检索引擎", "sublabel": "retriever · top-k", "pos": [480, 200], "size": [150, 56] },
+    { "id": "advisor", "type": "backend", "label": "建议卡", "sublabel": "advisor · 只建议", "pos": [480, 310], "size": [150, 56] },
+    { "id": "curator", "type": "backend", "label": "回灌引擎", "sublabel": "curator · 验证门槛", "pos": [480, 420], "size": [150, 56] },
+
+    { "id": "store", "type": "database", "label": "独立存储", "sublabel": "memory.db", "pos": [740, 260], "size": [140, 80] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "训练经验 Memory（独立系统）", "wraps": ["adapter", "profiler", "retriever", "advisor", "curator", "store"] }
+  ],
+  "connections": [
+    { "from": "atf", "to": "adapter", "variant": "emphasis" },
+    { "from": "cli", "to": "adapter" },
+    { "from": "other", "to": "adapter", "variant": "dashed" },
+    { "from": "adapter", "to": "profiler", "label": "训练前", "fromSide": "right", "toSide": "left" },
+    { "from": "profiler", "to": "retriever" },
+    { "from": "retriever", "to": "advisor" },
+    { "from": "adapter", "to": "curator", "label": "训练后", "variant": "dashed", "fromSide": "right", "toSide": "left" },
+    { "from": "curator", "to": "store", "label": "写回", "variant": "emphasis", "fromSide": "right", "toSide": "left" },
+    { "from": "retriever", "to": "store", "label": "读", "variant": "dashed", "fromSide": "right", "toSide": "top" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "训练前推荐", "items": ["画像 → 检索 → 建议卡，只读不写", "检索用 Claim（跨单据通用），追溯用 Case"] },
+    { "dot": "amber", "title": "训练后回灌", "items": ["EvidenceEvent → candidate → 验证门槛 → 状态机", "永停人工验收闸，不自动写库"] },
+    { "dot": "cyan", "title": "独立化原则", "items": ["核心层不 import 任何消费方代码", "消费方通过适配接口单向依赖 memory"] }
+  ]
+}

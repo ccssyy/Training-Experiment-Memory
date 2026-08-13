@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "PatternClaim 状态机",
+    "subtitle": "经验从候选到验证、归因确认、负经验与终态的完整转换",
+    "output": "claim-lifecycle.html",
+    "viewBox": [980, 660]
+  },
+  "lanes": [
+    { "id": "main", "label": "主链路（证据强度递增）" },
+    { "id": "side", "label": "负经验 / 未解决" },
+    { "id": "terminal", "label": "终态" }
+  ],
+  "states": [
+    { "id": "candidate", "type": "start", "label": "candidate", "sublabel": "待验证候选", "lane": "main", "col": 0, "step": "01", "tag": "entry" },
+    { "id": "confirmed", "type": "active", "label": "confirmed", "sublabel": "归因/诊断确认", "lane": "main", "col": 1, "step": "02", "tag": "diagnostic" },
+    { "id": "validated", "type": "success", "label": "validated", "sublabel": "干预验证通过", "lane": "main", "col": 2, "step": "03", "tag": "7 项全过" },
+    { "id": "rejected", "type": "failure", "label": "rejected", "sublabel": "验证失败·负经验", "lane": "side", "col": 0, "tag": "8 类情形" },
+    { "id": "unresolved", "type": "failure", "label": "unresolved", "sublabel": "确认但无解", "lane": "side", "col": 1, "tag": "阻断重试" },
+    { "id": "superseded", "type": "failure", "label": "superseded", "sublabel": "被新策略取代", "lane": "terminal", "col": 0, "tag": "terminal" }
+  ],
+  "transitions": [
+    { "from": "candidate", "to": "confirmed", "variant": "default", "route": "drop" },
+    { "from": "confirmed", "to": "validated", "variant": "emphasis", "route": "drop" },
+    { "from": "candidate", "to": "validated", "label": "7 项全过", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "candidate", "to": "rejected", "label": "验证失败", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "candidate", "to": "unresolved", "label": "无解路径", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "from": "validated", "to": "superseded", "label": "被取代", "variant": "security", "fromSide": "bottom", "toSide": "top", "labelDy": 41 }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "证据强度", "items": ["candidate 只是候选，不参与正式检索", "confirmed 归因可信但干预未验证，检索权重 +0.08", "validated 干预验证通过，检索权重 +0.15"] },
+    { "dot": "rose", "title": "负知识", "items": ["rejected 作为负经验（contraindication 素材）", "unresolved 显式建模，防止反复试错", "两者都不参与推荐"] },
+    { "dot": "amber", "title": "转换裁判", "items": ["每个状态转换 = 一条裁判记录", "ATF 侧由 Decision Ledger 记录", "memory 核心不引入新事实 owner"] }
+  ]
+}

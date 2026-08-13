@@ -28,6 +28,8 @@
 | 12-phase3-plan | Phase 3 实现切片（回灌闭环框架 Postflight） | 执行计划 |
 | phase2/ | 画像引擎/检索器/建议卡代码 + 机器可读数据 + FINDINGS | 已跑通 |
 | phase3/ | 回灌引擎 curator + EvidenceEvent + 验证门槛 + dry-run | 已跑通 |
+| docs/architecture-overview.md | 架构设计总览（分层/对象模型/状态机/验证门槛） | 设计总览 |
+| docs/diagrams/ | 4 张架构图（系统架构/闭环/对象模型/状态机，archify HTML） | 已生成 |
 | memory/schema.md | 冻结 v1 schema（EvidenceEvent/Case/Claim/标签/状态机 + task_shape） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
 | memory/field-semantics.md | 字段语义词典 v2（三层通用结构：85 概念 × 16 单据 × 298 字段名归并） | candidate |
