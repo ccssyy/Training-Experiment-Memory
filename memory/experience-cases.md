@@ -1,7 +1,7 @@
-# 首批 ExperienceCase（18 条）
+# 首批 ExperienceCase（24 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate，待 Phase 1 交叉验证后确认）
-> 证据来源：`docs/performance/`、`~/coding-brain/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `/data/sam/Qwen2.5-VL-main` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包（`/data/chris/bea/repos/zito-atf-dev/tmp/non_goods_round3_analysis/`）。
+> 证据来源：`docs/performance/`、`~/coding-brain/04_Registries/`、`analysis_outputs/`（路径均为 A800 上 `/data/sam/Qwen2.5-VL-main` 相对路径）；CASE-0013 起来源为同事 `non_goods_round3_analysis` 包；CASE-0019 起为 coding-brain Registry（4-5 月早期训练）。
 
 ---
 
@@ -374,4 +374,132 @@ evidence_refs:
   - records/round3_badcase_recheck/report.md（020223e3/07944f15 部分复现）
   - records/round3_eval/ROUND3_HANDOFF.md（swb 优先级 3）
 provenance: {source_revisions: [20260717_cluster_8to2_v1 test], decision_ref: null, created_at: 2026-08-13}
+```
+
+---
+
+## 以下 CASE-0019~0024 来源：coding-brain Registry（4-5 月早期训练）
+
+## CASE-0019 空输出来源二分（选错字段 vs 真实负样本）
+
+```yaml
+case_id: CASE-0019
+run_ref: EXP-20260421-empty-source-split
+fields: [goods_name, 空输出相关字段]
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-EMPTY-OUTPUT-SOURCE
+  symptom_metric: 空输出需二分——CI 总空 1073（830 选错字段/243 真无货）；BL 1185（845/340）；Air 459（430/29）；PO 131（9/122）；CR 420（0/420）
+intervention: 区分"选错字段"（加字段锚点）vs"真实负样本"（控比例）
+outcome:
+  baseline_ref: null
+  delta: {可避免比例: CI 77% / BL 71% / Air 94% / PO 7% / CR 0%}
+  protected_regression: null
+evidence_refs:
+  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260421-empty-source-split）
+  - ~/coding-brain/04_Registries/Metric Registry.md
+provenance: {source_revisions: [0414_5_goods], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0020 BL group 标注口径迁移导致指标下降
+
+```yaml
+case_id: CASE-0020
+run_ref: EXP-20260507-bl-group-regression
+fields: [goods_name, goods_weight, goods_parcel, goods_quantity]
+layout: {document_type: bill_of_lading, cluster: bl, page_role: dense_table}
+problem:
+  pattern_id: PL-LABEL-CALIBER-SHIFT
+  symptom_metric: BL F1 0.7606→0.6960；行项目字段下降，goods_name 略升——根因是 group 标注口径从旧合并 group 迁移到真实多 group，非全局 OCR 退化
+intervention: 不回退 group 修复，转向 targeted 增强 + 字段配额
+outcome:
+  baseline_ref: 0427 BL
+  delta: {BL F1: -0.0646（口径迁移，非退化）}
+  protected_regression: null
+evidence_refs:
+  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260507-bl-group-regression）
+provenance: {source_revisions: [0427/0506 BL], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0021 late checkpoint 不一定更好
+
+```yaml
+case_id: CASE-0021
+run_ref: exp4 5goods checkpoint selection
+fields: []
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-LATE-CKPT-RISK
+  symptom_metric: ckpt1015 macro 0.8537 推荐；ckpt1575 只高 0.0007 但带风险标记；ckpt1295 macro 0.8318 负面选点（不如 ep9/ep9.67 稳）
+intervention: 密集保存 + 多 checkpoint 评估 + 0.003 平局阈值 + 风险标记
+outcome:
+  baseline_ref: null
+  delta: {ckpt1015 macro F1: 0.8537, weighted 0.8081}
+  protected_regression: null
+evidence_refs:
+  - ~/coding-brain/04_Registries/Model Registry.md
+  - docs/performance/2026-05-12-exp4-best-checkpoint-selection.md
+provenance: {source_revisions: [exp4 5goods], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0022 页眉/letterhead 卖方抬头是当事人坏例集中模式
+
+```yaml
+case_id: CASE-0022
+run_ref: EXP-20260508-target-field-review
+fields: [seller]
+layout: {document_type: mixed_6other, cluster: null, page_role: letterhead}
+problem:
+  pattern_id: NG-LETTERHEAD-PARTY
+  symptom_metric: 目标字段坏例 82 张中，seller 页眉/左上 logo 或 letterhead 卖方抬头 45/82
+intervention: 版式/公司频次用于 prompt 或样本修复
+outcome:
+  baseline_ref: null
+  delta: {letterhead 卖方抬头: 45/82}
+  protected_regression: null
+evidence_refs:
+  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260508-target-field-review）
+provenance: {source_revisions: [0506_6_others], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0023 跨硬件训练吞吐分层
+
+```yaml
+case_id: CASE-0023
+run_ref: EXP-20260509-bw1000-a800-throughput
+fields: []
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-CROSS-HW-THROUGHPUT
+  symptom_metric: BW1000 4 卡 0.729 samples/s vs A800 0.911 samples/s，约 A800 80%
+intervention: 结论分层表达"可正确训练但不等价"，主训练前需优化复测
+outcome:
+  baseline_ref: A800 4 卡
+  delta: {BW1000 吞吐: A800 的 80%}
+  protected_regression: null
+evidence_refs:
+  - ~/coding-brain/04_Registries/Training Run Registry.md
+  - ~/coding-brain/04_Registries/Decision Registry.md（跨硬件分层表达）
+provenance: {source_revisions: [0428 五类货描], decision_ref: null, created_at: 2026-08-13}
+```
+
+## CASE-0024 样本贡献比失衡导致低占比单据被淹没
+
+```yaml
+case_id: CASE-0024
+run_ref: EXP-20260423-5goods-balance
+fields: []
+layout: {document_type: mixed_5goods, cluster: null, page_role: null}
+problem:
+  pattern_id: PL-SAMPLE-IMBALANCE
+  symptom_metric: 五类货描样本贡献比 14.3:1，PO/Air 被淹没
+intervention: 平衡到 2.3:1（CI 7936/BL 6271/Air 4026/PO 3509/CR 3452）
+outcome:
+  baseline_ref: 0414 失衡
+  delta: {贡献比: 14.3:1 → 2.3:1}
+  protected_regression: 未验证模型指标
+evidence_refs:
+  - ~/coding-brain/04_Registries/Experiment Registry.md（EXP-20260423-5goods-balance）
+  - ~/coding-brain/04_Registries/Dataset Registry.md
+provenance: {source_revisions: [0423_5_goods_balanced], decision_ref: null, created_at: 2026-08-13}
 ```

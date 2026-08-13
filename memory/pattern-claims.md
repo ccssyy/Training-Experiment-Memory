@@ -1,7 +1,7 @@
-# 首批 PatternClaim（12 条）
+# 首批 PatternClaim（18 条）
 
 > 日期：2026-08-13 ｜ 状态：首批（candidate / validated，依历史证据强度区分；见 schema 状态机）
-> `supported_by` 指向 `experience-cases.md`；`capability_tags` 见 `capability-tags.md`。
+> `supported_by` 指向 `experience-cases.md`；`capability_tags`/`task_shape` 见 `capability-tags.md` 与 `schema.md`。
 
 ---
 
@@ -259,4 +259,144 @@ applicability:
   transfer_level: mechanism
 supported_by: [CASE-0015, CASE-0016]
 outcome_aggregate: {typical_delta: pi F1 0.6320（最低）/ so 漏 goods_name, cost_range: 低, stability: 未验证}
+```
+
+---
+
+## 以下 CLAIM-0013~0018 来源：coding-brain Registry（4-5 月早期训练）
+
+## CLAIM-0013 空输出要二分（选错字段 vs 真实负样本）
+
+```yaml
+claim_id: CLAIM-0013
+status: validated            # 历史多轮验证，PO/CR 真负样本、CI/BL/Air 选错字段的二分清晰
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [empty_output]
+problem_pattern: 空输出混同"选错字段"与"真实无货物负样本"两种成因，处理策略相反
+intervention_strategy: 二分归因——选错字段（加字段锚点，可避免）vs 真实负样本（控比例，不能清零）
+applicability:
+  preconditions: [存在空输出字段的抽取任务]
+  contraindications: [全部真负样本的单据（如 CR）不加锚点]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0019]
+outcome_aggregate: {typical_delta: 可避免比例 CI 77%/BL 71%/Air 94%/PO 7%/CR 0%, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0014 指标下降先查标注口径，再判模型退化
+
+```yaml
+claim_id: CLAIM-0014
+status: validated
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [label_caliber]
+problem_pattern: 指标下降可能来自标注口径迁移（如 group 从旧合并迁移到真实多 group），而非模型退化
+intervention_strategy: 先核对标注口径是否变化，再判退化；口径迁移时不回退修复，转向 targeted 增强
+applicability:
+  preconditions: [标注口径有过变更的字段/单据]
+  contraindications: [口径未变时直接当退化分析]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0020]
+outcome_aggregate: {typical_delta: BL F1 -0.0646 为口径迁移, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0015 late checkpoint 不一定更好，需平局阈值 + 风险标记
+
+```yaml
+claim_id: CLAIM-0015
+status: validated
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [checkpoint_selection]
+problem_pattern: 最末 checkpoint 可能只微弱高于早停点却带风险（如 ckpt1575 只高 0.0007）
+intervention_strategy: 密集保存 + 多 checkpoint 评估 + 0.003 平局阈值 + 风险标记（Total F1 降>0.02 / 关键字段降>0.05）
+applicability:
+  preconditions: [多 checkpoint 训练]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0021]
+outcome_aggregate: {typical_delta: ckpt1015 macro 0.8537, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0016 页眉/letterhead 卖方抬头是当事人字段坏例集中模式
+
+```yaml
+claim_id: CLAIM-0016
+status: candidate
+capability_tags:
+  semantic: [party]
+  value_shape: [short_text]
+  cardinality: [single_value]
+  layout: [multi_block, labeled_value]
+problem_pattern: 当事人（seller）字段坏例集中在页眉/左上 logo/letterhead 卖方抬头
+intervention_strategy: 版式/公司频次统计用于 prompt 约束或样本修复
+applicability:
+  preconditions: [有页眉/letterhead 版式的单据]
+  contraindications: [无]
+  confidence: medium
+  transfer_level: structural
+supported_by: [CASE-0022]
+outcome_aggregate: {typical_delta: letterhead 卖方抬头 45/82, cost_range: 低, stability: 未验证}
+```
+
+## CLAIM-0017 跨硬件训练结论要分层表达（可正确训练 ≠ 等价）
+
+```yaml
+claim_id: CLAIM-0017
+status: validated
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [cross_hardware]
+problem_pattern: 跨硬件 fp16/多卡通信/micro batch 差异会破坏逐位可复现，不能声明等价
+intervention_strategy: 结论分层——"可正确训练但不等价"，业务指标在同硬件复测
+applicability:
+  preconditions: [跨硬件迁移训练]
+  contraindications: [无]
+  confidence: high
+  transfer_level: context
+supported_by: [CASE-0023]
+outcome_aggregate: {typical_delta: BW1000 约 A800 80% 吞吐, cost_range: 低, stability: 高}
+```
+
+## CLAIM-0018 样本贡献比失衡导致低占比单据被淹没
+
+```yaml
+claim_id: CLAIM-0018
+status: candidate
+capability_tags:
+  semantic: []
+  value_shape: []
+  cardinality: []
+  layout: []
+task_shape:
+  triggers: [sample_balance]
+problem_pattern: 多单据联合训练时样本贡献比失衡（14.3:1）导致低占比单据被淹没
+intervention_strategy: 平衡贡献比（→2.3:1）+ warmup/effective batch 调整
+applicability:
+  preconditions: [多单据联合训练]
+  contraindications: [单单据不适用]
+  confidence: medium
+  transfer_level: context
+supported_by: [CASE-0024]
+outcome_aggregate: {typical_delta: 贡献比 14.3:1 → 2.3:1, cost_range: 低, stability: 未验证模型指标}
 ```
