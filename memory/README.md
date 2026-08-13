@@ -8,6 +8,7 @@
 |---|---|---|
 | `schema.md` | 冻结 schema：ExperienceCase / PatternClaim / 能力标签 / 状态机 | 冻结 v1 |
 | `capability-tags.md` | 通用能力标签初版（4 类约 40 标签） | candidate |
+| `field-semantics.md` | 字段语义词典初版（别名表 + 值形态规则 + 易混对） | candidate |
 | `experience-cases.md` | 首批 ExperienceCase（12 条，绑证据） | candidate |
 | `pattern-claims.md` | 首批 PatternClaim（9 条，聚合 + 失效边界） | candidate/validated |
 
@@ -22,6 +23,8 @@ ExperienceCase（单次观察，绑证据，不可变）
         ▲ evidence_refs 落回
 历史素材（runs / docs/performance / registry / analysis_outputs，只读）
 ```
+
+字段语义词典（field-semantics.md）是 L3 字段层的匹配锚：新单据字段名/值 → 归一化到 canonical 字段 → 挂能力标签 → 命中 Claim。
 
 ## 检索/推荐 vs 追溯
 
