@@ -51,11 +51,16 @@ provenance*: {source_revisions, decision_ref, created_at}  # 对象（source_rev
 ```yaml
 claim_id*: CLAIM-0001                                # 单值
 status*: candidate | validated | rejected | unresolved | superseded  # 单值（枚举）
-capability_tags*:                                   # 对象（4 个子键，均列表）
+capability_tags*:                                   # 对象（4 个子键，均列表）——字段语义维度
   semantic: [quantity, monetary, weight]
   value_shape: [grouped_value, numeric_unit]
   cardinality: [multi_value, row_aligned, cross_page_group]
   layout: [dense_table, long_table]
+task_shape:                                         # 对象（可选）——任务形态维度，上下文类经验用
+  lane: goods | non_goods | both                    # 单值
+  bbox_required: true | false                       # 单值
+  cross_page: true | false                          # 单值
+  triggers: [gb_large_batch, vllm_runtime, cluster_split, field_align]  # 列表（训练配置/运行时/评估口径触发词）
 problem_pattern*: 行级归组数量字段在密集跨页表格易漏行   # 单值
 intervention_strategy*: 长表分段 + 行级守恒 + 连续重叠 core  # 单值
 applicability:                                      # 对象
@@ -66,6 +71,10 @@ applicability:                                      # 对象
 supported_by*: [CASE-0001, CASE-0007, ...]          # 列表（引用案例，≥1）
 outcome_aggregate: {typical_delta, cost_range, stability}  # 对象（typical_delta/cost_range/stability 均单值）
 ```
+
+**检索维度**：Claim 有两个并列检索键——
+- `capability_tags`（字段语义）：字段语义类经验（漏行/串位/币种/同值冒充…）靠它命中。
+- `task_shape`（任务形态）：上下文类经验（训练配置/运行时/评估口径，如 GB256 主线、vLLM bbox、cluster split、字段面对齐）靠它命中。这类经验的 `capability_tags` 可为空，但 `task_shape` 必须非空，否则检索永远命中不了（成为"死数据"）。
 
 约束：
 - `status=validated` 需：目标改善 + bbox/基数/归组无未解释退化 + 保护字段无回归 + evaluator 有效 + runtime raw 完整 + ID-OOD 可解释 + 人工验收（7 项）。

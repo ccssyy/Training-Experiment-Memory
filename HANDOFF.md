@@ -24,7 +24,9 @@
 | 08-object-model-and-hosting | Case+Claim 两层映射 + 承载决策 | 讨论稿 |
 | 09-hosting-and-source-correction | 承载修正 + Phase 1 素材主体（Qwen） | 讨论稿 |
 | 10-phase1-plan | Phase 1 执行切片（整理历史→Case/Claim/标签） | 执行计划 |
-| memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机，含字段类型标注） | 冻结 |
+| 11-phase2-plan | Phase 2 实现切片（画像引擎 + 规则检索 MVP） | 执行计划 |
+| phase2/ | 画像引擎/检索器/建议卡代码 + 机器可读数据 + FINDINGS | 已跑通 |
+| memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机 + task_shape 任务形态维度） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
 | memory/field-semantics.md | 字段语义词典 v2（三层通用结构：85 概念 × 16 单据 × 298 字段名归并） | candidate |
 | memory/experience-cases.md | 首批 ExperienceCase（18 条，绑证据；含 non_goods round3 6 条） | candidate |
@@ -53,10 +55,18 @@
 - 字段语义词典 v2（三层通用结构：85 个 canonical 语义概念，从 16 单据 298 个字段名归并；值形态规则 7 条挂概念；两批单据命名差异表；未覆盖处理链路 + 概念状态机）。
 
 **未做 / 下一步**：
-1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化、概念向量锚（Phase 2）。
-2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（Qwen 侧 12 条 + non_goods 6 条已挑，其余待补）。
+1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化（区分重量/计数单位）、概念向量锚（P4）。
+2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（Qwen 侧 12 条 + non_goods 6 条已挑，其余待补）。**Phase 2-MVP 已验证 schema 结构，可放心堆量。**
 3. ~~同事 `non_goods_round3_analysis` 转 non_goods 专属 Case~~ ✅ 已转 6 Case + 3 Claim。
-4. Phase 2（画像引擎/检索引擎）实现切片待定。
+4. ~~Phase 2-MVP（画像引擎 + 规则检索）~~ ✅ 已跑通（见 `11-phase2-plan.md` + `phase2/`），结构反馈见 `phase2/FINDINGS.md`。
+
+## Phase 2-MVP 结构反馈（重点，堆量前先看）
+
+端到端检索已跑通（4 场景：装箱单/aco/未知字段/bbox 任务），暴露 4 个结构问题（详见 `phase2/FINDINGS.md`）：
+- **F3（已修）**：上下文类 Claim（训练稳定性/运行时/评估口径）的 capability_tags 全空无法命中 → schema 给 PatternClaim 加 `task_shape` 任务形态维度。
+- **F2（待修）**：值形态过滤规则矩阵不全（只做 grouped↔single 一条）。
+- **F4（待修）**：值形态启发把 CTN 误判为重量/尺寸单位。
+- **F1（待修）**：版式标签 multi_block 太泛。
 
 ## 下一步：Phase 1（整理历史 → ExperienceCase/PatternClaim）
 
