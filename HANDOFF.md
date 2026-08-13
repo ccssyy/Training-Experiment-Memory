@@ -41,7 +41,7 @@
 5. **版式相似度**：双路（布局结构规则 0.6 + 页面视觉向量 0.4）。
 6. **数据支持四维**：support / coverage / exposure / diversity。
 7. **迁移层级**：direct / structural / mechanism / context。
-8. **策略状态**：validated / rejected / unresolved。
+8. **策略状态**：candidate / confirmed / validated / rejected / unresolved / superseded（confirmed=归因/诊断确认，validated=干预验证通过）。
 9. **仓库**：private，ccssyy/Training-Experiment-Memory；旧位置（ATF worktree 分支、本地 AutoTrainingFlow 目录）全部保留只读。
 10. **不引入新事实 owner**：经验是独立存储通用对象，ATF 侧由 Decision Ledger 记录状态转换。
 
