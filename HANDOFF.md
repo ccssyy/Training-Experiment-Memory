@@ -26,7 +26,7 @@
 | 10-phase1-plan | Phase 1 执行切片（整理历史→Case/Claim/标签） | 执行计划 |
 | memory/schema.md | 冻结 v1 schema（Case/Claim/标签/状态机，含字段类型标注） | 冻结 |
 | memory/capability-tags.md | 通用能力标签初版（4 类约 40 标签） | candidate |
-| memory/field-semantics.md | 字段语义词典初版（别名表 + 值形态规则 + 易混对） | candidate |
+| memory/field-semantics.md | 字段语义词典 v2（三层通用结构：60 概念 × 16 单据 × 298 字段名归并） | candidate |
 | memory/experience-cases.md | 首批 ExperienceCase（12 条，绑证据） | candidate |
 | memory/pattern-claims.md | 首批 PatternClaim（9 条，聚合+失效边界） | candidate/validated |
 
@@ -50,10 +50,10 @@
 - 通用能力标签初版（语义/值形态/基数关系/版式视觉 4 类）。
 - 首批 12 条 ExperienceCase（装箱单四大失败机制 + 训练稳定性/金额清洗/运行时 bbox/评估口径）。
 - 首批 9 条 PatternClaim（4 条 validated + 5 条 candidate，含失效边界）。
-- 字段语义词典初版（别名表 + 值形态规则 + 易混字段对，来源：字段合同审计 + `hm_alias` + `pl_prompt_field`）。
+- 字段语义词典 v2（三层通用结构：60 个 canonical 语义概念，从 16 单据 298 个字段名归并；值形态规则 7 条挂概念；两批单据命名差异表）。
 
 **未做 / 下一步**：
-1. 字段语义词典补齐：其余 9 类单据 `*_prompt_field` 字段说明 + `alias_map` per-doc_type 别名差异（海运单 packages/ctns 多层语义、销售订单 product_code 等）。
+1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化、概念向量锚（Phase 2）。
 2. 剩余素材的批量整理：21 份报告 + 50 分析 + 69 摘要 + 104 run 尚未穷尽（本批只挑了证据最清晰的 12 条 Case）。
 3. 同事 `non_goods_round3_analysis`（checkpoint-342 + provenance）尚未转成 non_goods 专属 Case。
 4. Phase 2（画像引擎/检索引擎）实现切片待定。

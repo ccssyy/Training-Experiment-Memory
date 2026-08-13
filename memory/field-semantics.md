@@ -1,161 +1,222 @@
-# 字段语义词典初版（v1）
+# 字段语义词典（v2：三层通用结构，全单据重做）
 
-> 日期：2026-08-13 ｜ 状态：初版（candidate，待人工确认后 validated）
-> 一手来源（A800 `/data/sam/Qwen2.5-VL-main`）：
-> - `analysis_outputs/20260805_full_field_contract_audit.md`（全字段合同审计）
-> - `analysis_outputs/20260805_field_contract_confirmation.md`（字段合同最终确认单，方案 A）
-> - `DataPrepare/system_prompt_all_en_zh_merge_1126.py`（`hm_alias` 别名表 + `pl_prompt_field` 字段全集说明）
+> 日期：2026-08-13 ｜ 状态：candidate（待人工确认）
+> **覆盖**：16 个单据（早期 6 种：商业发票 ci / 提单 bl / 航空单 air / 贷款申请书 loan / 购买订单 po / 货物收据 cr + 第二批 10 种：借记通知单 dbn / 发货单 sdn / 形式发票 pi / 提货单 do / 海运单 swb / 出口托收申请书 aco / 装箱单 pl / 贷记通知单 crn / 销售合同 sc / 销售订单 so），**298 个字段名归并为 60 个 canonical 语义概念**。
+> **来源**：`system_prompt_all_en_zh_merge_1126.py`（16 个 `*_prompt_field` + `alias_map` + `all_keys_group_map` 解析）+ `20260805_full_field_contract_audit.md` 值形态规则。
 
-## 0. 定位
+## 0. 三层结构
 
-L3 字段层匹配的**目标空间**：新单据的字段名/字段说明/样本值 → 归一化到本词典的 canonical 字段 → 迁移该字段的历史经验。三路匹配（别名表 / 值形态启发 / 语义向量）都以本词典为锚。
-
-**初版范围**：以装箱单（最难单据）字段全集为核心 + 8 类单据合同差异为补充；其余 9 类单据的字段说明后续按同法补齐。
-
-## 1. canonical 字段表
-
-### 1.1 货描明细字段（进入 group，按行提取）
-
-| canonical | 中文 | 别名/定位词 | 值形态 | 基数 | 易混 |
-|---|---|---|---|---|---|
-| `item_no` | 序号 | item_no | numeric_value | single_value（逐行） | product_no, product_code |
-| `product_no` | 产品编号 | product_no | code_value | single_value | item_no, goods_name |
-| `product_code` | 商品编码 | Product Code | code_value | single_value（逐行） | item_no |
-| `goods_name` | 商品名称 | Description of Goods / Commodity / bl_goods_name | long_text | single_value（逻辑实体优先拆分） | product_no |
-| `goods_quantity` | 货物数量 | QTY / Quantity / PCS / goods_qty / bl_qty_of_goods / count_of_goods | numeric_value | single_value（逐行） | goods_carton/parcel/pallet |
-| `goods_carton` | 装箱数量 | Cartons / CTNS | numeric_value | single_value（逐行） | goods_quantity |
-| `goods_parcel` | 包裹数量 | Packages / Pkgs / Bales / bundle | numeric_value | single_value（逐行） | goods_quantity |
-| `goods_pallet` | 托盘数量 | pallet / drum | numeric_value | single_value（逐行） | goods_quantity |
-| `goods_gross_weight` | 货物毛重 | Gross Weight / G.W. | numeric_unit | single_value（逐行） | goods_net_weight, total_gross_weight |
-| `goods_net_weight` | 货物净重 | Net Weight / N.W. | numeric_unit | single_value（逐行） | goods_gross_weight, total_net_weight |
-| `goods_weight` | 货物重量（未指明毛净） | Weight / KGS / MT（无 GW/NW 提示） | numeric_unit | single_value（逐行） | goods_gross/net_weight |
-| `goods_measurement` | 商品体积 | Measurement / CBM | numeric_unit | single_value（逐行） | — |
-| `price_of_goods` | 单价 | goods_price / price_of_goods | currency_amount | single_value（逐行） | goods_amount |
-| `goods_amount` | 商品金额小计 | Amount | currency_amount | single_value（逐行） | price_of_goods, total_amount |
-
-### 1.2 表头单位字段（非 group，列表）
-
-`goods_qty_title_unit` / `goods_weight_title_unit` / `goods_gross_weight_title_unit` / `goods_net_weight_title_unit` / `goods_carton_title_unit` / `goods_pallet_title_unit` / `goods_parcel_title_unit`。全部 `numeric_unit`（单位文本），仅取表头，不投影到行值。
-
-### 1.3 汇总字段（非 group，列表）
-
-| canonical | 中文 | 定位词 | 值形态 |
-|---|---|---|---|
-| `subtotal` | 金额小计 | Sub Total | currency_amount |
-| `total_amount` | 商品总金额 | Total / Total Amount | currency_amount |
-| `total_amount_upper` | 大写总金额 | SAY / ONLY | long_text |
-| `total_gross_weight` | 毛重总计 | Total（毛重列底部） | numeric_unit |
-| `total_net_weight` | 净重总计 | Total（净重列底部） | numeric_unit |
-| `total_qty` | 数量总计 | Total（数量列底部） | numeric_value |
-
-### 1.4 独立字段（非 group）
-
-| canonical | 中文 | 定位词 | 值形态 | 基数 |
-|---|---|---|---|---|
-| `currency` | 币种 | 跟随金额（三位代码 USD，无代码用 $） | currency_amount | single/multi |
-| `container_no` | 集装箱编号 | Container No / Container Id | code_value | multi |
-| `seal_no` | 铅封号 | Seal No | code_value | multi |
-| `shipping_marks` | 唛头 | Shipping Marks / Marks | long_text | multi |
-| `hs_code` | HS 编码 | HS Code | code_value | multi |
-| `size` | 尺寸（长宽高） | Size / Dimension / MEAS | numeric_unit | multi（全局，即使表格内） |
-
-### 1.5 非货描字段（party/地址/银行/运输/日期/编号，摘要）
-
-| 类 | 字段 |
-|---|---|
-| 当事人 | buyer(买方)/seller(卖方)/consignee(收货方)/shipper(发货方)/factory(制造商)/beneficiary(受益人)/issuer(出具人)/carrier(承运人) |
-| 地址 | buyer_address/seller_address/consignee_address/shipper_address/factory_address/collection_point(+_address)/beneficiary_bank_address |
-| 银行 | beneficiary_bank/beneficiary_account/swift_code/payment_info/payment_company |
-| 运输 | port_of_loading(发货港)/port_of_discharge(目的港)/port_of_transhipment(中转港)/vessel_name/flight_no/bl_no/incoterm |
-| 日期 | invoice_date/issue_date/shipment_date/flight_date/delivery_date/payment_due_date |
-| 编号 | invoice_number/order_number/contract_no/pi_number/packing_list_no/certificate_no/reference/our_reference_no/deliver_order_no/subcontract_no |
-| 条款 | payment_term/payment_terms_tenor/country_of_origin/packaging_method |
-
-## 2. 别名表（canonical → 别名，取自 `hm_alias`）
-
-```yaml
-goods_name: [bl_goods_name, goods_name]
-goods_quantity: [goods_qty, bl_qty_of_goods, count_of_goods]
-price_of_goods: [goods_price, price_of_goods]
-# 中英别名（非货描）：
-buyer: [buyer_zh, buyer_en, buyer]
-consignee: [ship_to_zh, consignee_zh, ship_to_en, consignee_en]
-seller: [seller, seller_zh, seller_en, title_seller_zh, title_seller_en, title_company]
-shipper: [shipper_zh, shipper_en]
-beneficiary: [beneficiary_zh, beneficiary_en]
-factory: [factory_zh, factory_en]
-# 反向索引 hm[v] → canonical（用于匹配时归一化）
+```
+canonical 语义概念（通用，跨单据稳定）   ← 检索键之一，与能力标签互补
+        ▲ 字段名实例（别名）挂载
+字段名实例（各单据的命名：goods_quantity / gross_weight / total_pieces / 件数 …）
+        ▲ 值形态规则
+值形态规则（挂概念：币种保留 / 表头优先 / 重量三分法 …）
 ```
 
-## 3. 值形态规则（从字段合同审计提炼）
+新单据字段匹配路径：字段名 + 说明 + 样例值 → 三路匹配（别名表/值形态启发/向量）→ 归一化到概念 → 打能力标签 → 命中 Claim。
+**概念层是通用的；字段名只是"该概念在某单据的实例"。**
 
-### 3.1 币种规则
+## 1. canonical 语义概念全集
 
-- 金额/单价与币种在**同一原文值/同一单元格**时，币种**必须保留**（`USD535.00` 不能去 USD）。
-- `currency` 是整单独立字段，不与行内币种互斥；**禁止把全局/表头币种投影到每行**。
-- 反例（已确认 contract 冲突）：销售合同/借记/贷记/提货/销售订单的 Gold 曾删行内币种，导致 exact 判错——去掉 USD 前缀后 amount F1 0.4211→1.0000。
+记号：`字段名(出现单据数)`；`@单据` = 仅该单据特有命名；`→` 后为值形态规则编号（§3）。
 
-### 3.2 单位规则（方案 A：严格表头优先）
+### 1.1 货描明细概念（goods_group 内，按行提取）
 
-- 表头单位 → `goods_*_title_unit`，**不投影到行值**。
-- 行内单位随值保留（`30 箱` 单位在行内 → 保留；纯数字 `1/2/3` 单位只在表头 → 不投影）。
-- 字段路由顺序：**显式字段/表头 → 表格列归属 → 同行语义 → 单位 taxonomy 兜底**。
+| # | 概念 | 中文 | 字段名实例 | 值形态 | 易混 |
+|---|---|---|---|---|---|
+| 1 | `quantity` | 货物数量 | goods_quantity(14); goods_qty, bl_qty_of_goods, count_of_goods(旧别名); total_pieces, no_of_pieces@air; total_quantity@cr | numeric_value，→R2 | carton/parcel/pallet |
+| 2 | `name` | 商品名称 | goods_name(14); bl_goods_name(旧别名); goods_description@aco; goods_services_description@loan | long_text，→R7 | product_no |
+| 3 | `item_no` | 序号 | item_no(9) | numeric_value | product_no, product_code |
+| 4 | `product_no` | 产品编号 | product_no(7); product_code@so; job_no@crn/dbn/sc | code_value | item_no |
+| 5 | `carton` | 装箱数 | goods_carton(12) | numeric_value | quantity |
+| 6 | `parcel` | 包裹数 | goods_parcel(12) | numeric_value | quantity |
+| 7 | `pallet` | 托盘数 | goods_pallet(9) | numeric_value | quantity |
+| 8 | `weight.gross` | 毛重 | goods_gross_weight(9); gross_weight@air | numeric_unit，→R3 | weight.net / total.weight.gross |
+| 9 | `weight.net` | 净重 | goods_net_weight(9); net_weight@air | numeric_unit，→R3 | weight.gross / total.weight.net |
+| 10 | `weight.unspecified` | 重量（未指明毛净） | goods_weight(6) | numeric_unit，→R3 | weight.gross/net |
+| 11 | `measurement` | 体积 | goods_measurement@bl/swb | numeric_unit | — |
+| 12 | `price` | 单价 | goods_price@crn/dbn/po/sc/so; price_of_goods@ci/do/pi/pl | currency_amount，→R1/R6 | amount |
+| 13 | `amount` | 金额小计 | goods_amount(9); dc_amount@cr/sdn; document_amount@loan | currency_amount，→R1/R5/R6 | price / total.amount |
 
-### 3.3 重量三分法
+### 1.2 汇总概念（non_goods_group，整单/整页）
 
-- `goods_gross_weight`（毛重）/ `goods_net_weight`（净重）/ `goods_weight`（未指明毛净重）三选一。
-- 有明确 GW/NW 时**绝对不提取** `goods_weight`；gross/net 严格排除单件（Unit G.W./Unit N.W.）与皮重（Tare Weight）。
+| # | 概念 | 中文 | 字段名实例 | 值形态 |
+|---|---|---|---|---|
+| 14 | `subtotal` | 金额小计 | subtotal(9) | currency_amount |
+| 15 | `total.amount` | 总金额 | total_amount(9); total_value@cr/sdn; amount_of_documer@aco | currency_amount，→R1 |
+| 16 | `total.amount.upper` | 大写总额 | total_amount_upper@do/pi/pl; total_value_upper@cr/sdn | long_text |
+| 17 | `total.qty` | 数量总计 | total_qty(10); total_quantity@cr/sdn | numeric_value |
+| 18 | `total.weight.gross` | 毛重总计 | total_gross_weight(10); total_weight@bl/do/pl/swb | numeric_unit |
+| 19 | `total.weight.net` | 净重总计 | total_net_weight(10) | numeric_unit |
 
-### 3.4 数量/包装四字段边界
+### 1.3 独立/单据级概念
 
-- `goods_quantity` = 商品总件数（QTY/Quantity/PCS），排除内包装数量（Inner Qty）、长度/面积/体积。
-- `goods_carton` = 箱数；`goods_parcel` = 包裹数；`goods_pallet` = 托盘数。
-- 表头优先下：`Quantity` 列里的值即使带 BAGS/LB/KGS/MT/CTNS 也进 `goods_quantity`（形式发票 `1,392 BAGS`、提货单 `11,000.00Lb`）。
-- 包装字段由**显式包装表头**决定（Carton/Parcel/Pallet），单位词不覆盖表头（海运单 `200 CTNS` 在 `QUANTITY:` 后仍归 quantity）。
+| # | 概念 | 中文 | 字段名实例 | 值形态 |
+|---|---|---|---|---|
+| 20 | `currency` | 币种 | currency(9); document_currency@loan; local_currency@aco | currency_amount，→R1 |
+| 21 | `container` | 集装箱号 | container_no(9) | code_value |
+| 22 | `container.count` | 集装箱数 | container_count@bl/swb | numeric_value |
+| 23 | `seal` | 铅封号 | seal_no(9) | code_value |
+| 24 | `marks` | 唛头 | shipping_marks(9) | long_text |
+| 25 | `hs_code` | HS 编码 | hs_code(7) | code_value |
+| 26 | `size` | 尺寸 | size@do/pl | numeric_unit |
+| 27 | `title_unit` | 表头单位 | goods_qty_title_unit(9); goods_weight_title_unit(4); goods_gross/net/carton/pallet/parcel_title_unit@do/pl | numeric_unit，→R4 |
 
-### 3.5 负号规则
+### 1.4 当事人概念
 
-- 贷记通知单 `goods_amount`/`goods_quantity`/`total_amount` 保留负号（已对齐，非主因）。
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 28 | `party.buyer` | 买方 | buyer(10); buyer_zh/buyer_en(别名); applicant_name@aco; efip@aco |
+| 29 | `party.seller` | 卖方 | seller(9); seller_zh/en(别名); title_company@do/pi/pl/sdn; issuer@do/pl; issued_by@air |
+| 30 | `party.consignee` | 收货方 | consignee(9); bl_consignee@bl; receiver@po/so; ship_to_*(别名) |
+| 31 | `party.shipper` | 发货方 | shipper(9); bl_shipper@bl |
+| 32 | `party.factory` | 制造商 | factory(7); manufacturer@po/so; manufacturer_address@crn/dbn/sc |
+| 33 | `party.beneficiary` | 受益人 | beneficiary(9); beneficiary_name@aco |
+| 34 | `party.carrier` | 承运人 | carrier(8); bl_carrier@bl; carrier_agent@air; forwarding_agent@bl/swb; agent_for_carrier@bl |
+| 35 | `party.notify` | 通知方 | notify@air; bl_notify_party@bl |
+| 36 | `party.drawee` | 付款人 | drawee_name@aco |
+| 37 | `party.contact` | 联系人 | buyer_contact(9); seller_contact(7); contact_person; contact_agent@aco; beneficiary_contact@aco; buyer_tel@po/so |
 
-### 3.6 容差规则
+### 1.5 地址概念
 
-- 容差（`±2%`）只跟随**直接相连的明细/汇总值**进入对应字段；合同段落的全局容差**不复制到每行**。
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 38 | `address` | 地址（挂 party） | buyer_address(10); seller_address(9); consignee_address(8); shipper_address(8); factory_address(4); beneficiary_address(3); supplier_address(3); manufacturer_address(3); receiver_address@po/so; notify_address@air; bl_notify_party_address@bl; forwarding_agent_address@bl/swb; collection_point_address(7); issued_by_address@air; carrier_agent_address@air; drawee_address@aco |
 
-### 3.7 品名规则
+### 1.6 银行概念
 
-- `goods_name` 按单据固定"**核心品名**"（销售合同只留品名，丢规格尺寸）或"完整描述"，两个相反目标需在数据集/评估中分别固定。
-- 排除独立列的型号/规格参数；同一单元格内不同逻辑实体需拆分。
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 39 | `bank.beneficiary` | 收款行 | beneficiary_bank(6); beneficiary_bank_en(别名) |
+| 40 | `bank.account` | 账号 | beneficiary_account(6); applicant_account_no@aco; export_account_no@aco; credit_account@aco; debit_account*@aco |
+| 41 | `bank.issuing` | 开证行 | issue_bank@cr/sdn; issuing_bank@aco; available_with@aco; credit_available_witt@aco |
+| 42 | `bank.collection` | 代收行 | collection_bank_nan/adc@aco |
+| 43 | `bank.intermediary` | 代理行 | intermediary_bank_name, intermediary_bank_swift_code |
+| 44 | `bank.swift` | SWIFT 代码 | swift_code(6) |
 
-## 4. 易混字段对（跨单据警示）
+### 1.7 运输概念
+
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 45 | `port.loading` | 发货港 | port_of_loading(10); bl_port_of_loading@bl; airport_of_departure@air |
+| 46 | `port.discharge` | 目的港 | port_of_discharge(10); bl_port_of_discharge@bl; airport_of_destination@air |
+| 47 | `port.transhipment` | 中转港 | port_of_transhipment(6) |
+| 48 | `place.delivery` | 交货地 | bl_place_of_delivery@bl; delivery_to@cr/sdn; final_destination@bl/swb; shipment_to@aco |
+| 49 | `place.receipt` | 收货地 | bl_place_of_receipt@bl; delivery_from@cr/sdn; collection_point(7); shipment_from@aco |
+| 50 | `vessel` | 船名 | vessel_name(7); vessel@loan/swb; bl_vessel@bl |
+| 51 | `voyage` | 航程号 | bl_voyage_number@bl |
+| 52 | `flight` | 航班号 | flight_no(6); flight_num@air |
+| 53 | `awb` | 运单号 | awb/mawb/hawb@air; air_waybill@aco |
+
+### 1.8 日期概念
+
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 54 | `date.issue` | 签发日期 | issue_date(9); bl_issue_date@bl; date@aco/loan |
+| 55 | `date.invoice` | 开票日期 | invoice_date(6); invoice_due_date@loan |
+| 56 | `date.shipment` | 装运日期 | shipment_date(7); bl_on_board_date@bl |
+| 57 | `date.delivery` | 交货日期 | delivery_date(8) |
+| 58 | `date.flight` | 航班日期 | flight_date(7) |
+| 59 | `date.order` | 订单日期 | order_date(5) |
+| 60 | `date.contract` | 合同日期 | contract_date(3) |
+| 61 | `date.received` | 收到日期 | received_date@cr/sdn |
+| 62 | `date.due` | 到期日 | payment_due_date(6); latest_repayment_date@loan |
+
+### 1.9 编号概念
+
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 63 | `no.invoice` | 发票号 | invoice_number(6); invoice_no@bl/cr/sdn/swb |
+| 64 | `no.order` | 订单号 | order_number(8); order_no@bl/swb |
+| 65 | `no.contract` | 合同号 | contract_no(8) |
+| 66 | `no.bl` | 提单号 | bl_no(7); bl_id@bl |
+| 67 | `no.pi` | 形式发票号 | pi_number@do/pl; proforma_invoice_number(4) |
+| 68 | `no.packing` | 装箱单号 | packing_list_no@do/pl |
+| 69 | `no.lc` | 信用证号 | certificate_no(3); lc_number@bl; credit_no@aco; dc_no@cr/sdn; back_to_back_credi@aco |
+| 70 | `no.reference` | 参考号 | reference(5); reference_no(8); our_reference_no(3); our_ref@aco; forward_contract_nc@aco |
+| 71 | `no.deliver` | 交货单号 | deliver_order_no(3); dn_no@sdn |
+| 72 | `no.document` | 单据号 | document_no(5); subcontract_no(4) |
+
+### 1.10 条款/申报/其他概念
+
+| # | 概念 | 中文 | 字段名实例 |
+|---|---|---|---|
+| 73 | `payment.term` | 付款条款 | payment_term(9); payment_terms_tenor(6); payment_method@po/so; payment_dp@aco |
+| 74 | `payment.info` | 收款信息 | payment_info(6); payment_company(6) |
+| 75 | `incoterm` | 贸易条款 | incoterm(10); icc_incoterms@aco |
+| 76 | `freight` | 运费条款 | freight_payable_at@bl/swb; freight_payment_terms@bl; freight_repaid@air; wt_val_payment@air |
+| 77 | `declared_value` | 申报价值 | declared_value@bl/swb; carriage_declared_value@air; customs_declared_value@air |
+| 78 | `origin` | 原产国 | country_of_origin(6); origin@bl/swb |
+| 79 | `signature` | 签章 | buyer_seal; seller_seal; shipper_signature@air; carrier_signature@air; carrier_signature_key@air; bl_seal@bl |
+| 80 | `packaging` | 包装方式 | packaging_method@do/pl |
+| 81 | `goods.attr` | 商品属性 | goods_color@po/so; brand_name@po/so |
+| 82 | `title` | 单据标题 | title(7) |
+| 83 | `remarks` | 备注说明 | remarks@po/so; handling_information@air; other_instructions@aco |
+| 84 | `doc.count` | 随附单据份数 | insurance_policy/customs_invoice/original_bl/commercial_invoice@aco（份数类） |
+| 85 | `financing` | 融资指示 | financing_required/financing_not_requir@aco; pre_shipment_financing@loan; fx_swap@aco; prepayment_or_purc@aco |
+
+## 2. 值形态规则（挂概念，来源：字段合同审计 + 最终确认单）
+
+| # | 规则 | 挂载概念 | 内容 |
+|---|---|---|---|
+| R1 | 币种保留 | price, amount, total.*, currency | 币种与数值同单元格/同原文值时**必须保留**；currency 为整单独立字段；禁止把全局/表头币种投影到每行。反例：销售合同去 USD 后 amount F1 0.4211→1.0000 |
+| R2 | 数量表头优先 | quantity | 字段路由：显式表头 → 表格列归属 → 同行语义 → 单位兜底；Quantity/Qty 列的值即使带 BAGS/LB/KGS/MT 也归 quantity；排除内包装（Inner Qty）、长度/面积/体积 |
+| R3 | 重量三分法 | weight.gross / net / unspecified | 有明确 GW/NW 时绝对不取 unspecified；gross/net 排除单件（Unit G.W./N.W.）与皮重（Tare） |
+| R4 | 表头单位不投影 | title_unit | 单位只在表头 → 进 *_title_unit，不拼到行值；行内单位随值保留 |
+| R5 | 负号保留 | amount（贷记） | 贷记通知单 goods_amount/goods_quantity/total_amount 保留负号 |
+| R6 | 容差跟随 | price, amount | 容差只跟随直接相连的明细/汇总值；合同段落全局容差不复制到每行 |
+| R7 | 品名单据化 | name | 按单据固定"核心品名"（销售合同丢规格）或"完整描述"；同一单元格不同逻辑实体拆分 |
+
+## 3. 易混概念对（跨单据警示）
 
 | 易混对 | 区分依据 |
 |---|---|
-| item_no ↔ product_no ↔ product_code | 序号 / 产品编号 / 商品编码（Product Code 表头）；复杂 SKU/型号进 product_no 或 product_code，不进 item_no |
-| goods_quantity ↔ goods_carton/parcel/pallet | 总件数 vs 包装数，靠表头（QTY vs Cartons/Packages/Pallet） |
-| goods_gross_weight ↔ goods_net_weight ↔ goods_weight | 毛/净/未指明，靠 GW/NW 提示词 |
-| goods_*_weight ↔ total_*_weight | 行级（group）vs 整单汇总（Total 底部），Subtotal 属行级大类 |
-| goods_amount ↔ price_of_goods ↔ total_amount | 金额小计 / 单价 / 整单总额 |
-| goods_name ↔ product_no | 品名 vs 产品号 |
-| invoice_number ↔ packing_list_no ↔ pi_number | 发票号 / 装箱单号 / 形式发票号（共用编号时装箱单优先） |
-| invoice_date ↔ issue_date ↔ shipment_date ↔ delivery_date ↔ flight_date | 各类日期靠引导词区分 |
-| buyer ↔ consignee | 买方 vs 收货方（ship to / Consignee） |
-| seller ↔ shipper ↔ issuer ↔ title_company | 卖方 vs 发货方 vs 出具人 vs 顶部标题公司 |
-| order_number ↔ contract_no ↔ deliver_order_no | 订单号 / 合同号 / 交货单号 |
-| reference ↔ our_reference_no | 参考号 vs 卖方内部参考号 |
-| port_of_loading ↔ port_of_discharge ↔ port_of_transhipment | 发货港 / 目的港 / 中转港 |
+| quantity ↔ carton/parcel/pallet | 总件数 vs 包装数，靠表头（QTY vs Cartons/Packages/Pallet） |
+| item_no ↔ product_no ↔ product_code | 序号 / 产品编号 / 商品编码；复杂 SKU 进 product_no 或 product_code |
+| weight.gross ↔ weight.net ↔ weight.unspecified | GW/NW 提示词 |
+| weight.* ↔ total.weight.* | 行级（group）vs 整单汇总（Total 底部） |
+| price ↔ amount ↔ total.amount | 单价 / 金额小计 / 总额 |
+| no.invoice ↔ no.packing ↔ no.pi | 发票号 / 装箱单号 / 形式发票号（共用编号时装箱单优先） |
+| party.buyer ↔ party.consignee | 买方 vs 收货方 |
+| party.seller ↔ party.shipper ↔ party.issuer | 卖方 vs 发货方 vs 出具人（title_company 是页眉公司，不再标 seller） |
+| port.loading ↔ port.discharge ↔ port.transhipment | 发货港 / 目的港 / 中转港 |
+| date.issue ↔ date.invoice ↔ date.shipment ↔ date.delivery ↔ date.flight | 引导词区分 |
+| no.order ↔ no.contract ↔ no.deliver | 订单号 / 合同号 / 交货单号 |
+| no.reference ↔ our_reference_no | 参考号 vs 卖方内部参考号 |
+
+## 4. 两批单据命名差异（迁移关键）
+
+早期 6 单据与第二批 10 单据**命名体系不同**，归并时已对齐：
+
+| 差异模式 | 早期（6 单据） | 第二批（10 单据） |
+|---|---|---|
+| 字段前缀 | bl_ 前缀（bl_shipper/bl_port_of_loading）、裸名（net_weight/gross_weight@air） | 统一 goods_/total_ 前缀 |
+| 单价 | price_of_goods（ci/do/pi/pl） | goods_price |
+| 发票号 | invoice_no（bl/cr/sdn/swb） | invoice_number |
+| 订单号 | order_no（bl/swb） | order_number |
+| 船名 | bl_vessel / vessel | vessel_name |
+| 提单号 | bl_id | bl_no |
+| 参考号 | reference_no / reference / our_ref | reference / our_reference_no |
+| 发货港 | bl_port_of_loading / airport_of_departure | port_of_loading |
+| 数量 | total_pieces/no_of_pieces（air）/ total_quantity（cr） | goods_quantity/total_qty |
+| 品名 | bl_goods_name / goods_services_description（loan） | goods_name |
+
+**含义**：新单据若字段名接近"早期命名"（如 `bl_` 前缀、`net_weight`），应归一化到同一概念而非新建；这正是别名表 + 向量的价值场景。
 
 ## 5. 与能力标签的映射
 
-本词典字段 → `capability-tags.md` 标签的对应（供检索时双路命中）：
+概念 → capability-tags（§见 capability-tags.md）：
 
-- `goods_quantity`/`goods_carton`/`goods_parcel`/`goods_pallet` → `quantity` + `numeric_value` + `grouped_value`
-- `goods_gross_weight`/`goods_net_weight`/`goods_weight`/`size`/`goods_measurement` → `weight`/`size` + `numeric_unit`
-- `goods_amount`/`price_of_goods`/`total_amount`/`currency` → `monetary` + `currency_amount`
-- `product_no`/`product_code`/`item_no` → `identifier` + `code_value`
-- `goods_name` → `item` + `long_text`
+- quantity/carton/parcel/pallet/item_no/total.qty → `quantity` + `numeric_value` + `grouped_value`
+- weight.gross/net/unspecified、total.weight.*、size、measurement → `weight`/`size` + `numeric_unit`
+- price/amount/subtotal/total.amount/currency → `monetary` + `currency_amount`
+- product_no/item_no/no.*/container/seal/hs_code → `identifier` + `code_value`
+- name → `item` + `long_text`
+- party.* → `party`；address → `address`；date.* → `temporal`；port.*/vessel/flight → 运输语义
 
-## 6. 待补（后续切片）
+## 6. 待补
 
-1. 其余 9 类单据（ci/bl/air/po/cr/dbn/sdn/pi/do/swb/sc/so/crn/aco）的 `*_prompt_field` 字段说明逐一并入。
-2. `alias_map`（per doc_type 的字段别名差异，约 1350 行）——尤其海运单 packages/ctns 多层语义、销售订单 product_code 等单据级规则。
-3. 值形态启发规则（编号/金额/日期/名称的正则判别）正式化。
+1. `hm_alias` 中英别名（buyer_zh/en 等）的完整并入（§1.4 已列部分）。
+2. 值形态启发正则（编号/金额/日期/名称判别式）正式化。
+3. 概念 → bge-m3 向量锚（Phase 2 做，词典先提供文本锚）。
