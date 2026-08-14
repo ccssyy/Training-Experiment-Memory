@@ -51,14 +51,15 @@ def value_shape_heuristic(sample):
     return "short_text", []
 
 
-def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embedding_server=None):
+def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embedding_server=None, index_path=None):
     """字段列表 → 画像。
 
     fields: [{"name": str, "sample": str|None}, ...]
     task_shape: 可选，任务形态定性（{"lane","bbox_required","cross_page","triggers":[...]}），上下文类经验检索用。
     image_path: 可选，样例图路径；提供且 embedding_server 可达时，走版式向量级画像。
     embedding_server: 可选，版式 embedding 服务地址（如 http://127.0.0.1:9031）。
-    返回 dict：字段级映射 + 聚合标签集合（含可选 layout_vector）。
+    index_path: 可选，layout_index.json 路径；提供时对版式向量做 k-NN 软匹配，得 layout_matches。
+    返回 dict：字段级映射 + 聚合标签集合（含可选 layout_vector / layout_matches）。
     """
     concepts = load_concepts()
     alias_index = {}
@@ -107,13 +108,16 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
             "cardinality": card,
         })
 
-    # 版式标签：MVP 从 doc_type 推断（后续可接版式画像）
+    # 版式标签：MVP 从 doc_type 推断（无样例图/服务时的 fallback）
     layout_tags = _infer_layout(doc_type)
 
-    # 版式向量：提供样例图 + embedding 服务时，走真实视觉向量级（可选，失败回退标签级）
+    # 版式向量 + 软匹配：提供样例图 + embedding 服务时，走真实视觉向量级（可选，失败回退标签级）
     layout_vector = None
+    layout_matches = []
     if image_path and embedding_server:
         layout_vector = embed_layout_vector(image_path, embedding_server)
+        if layout_vector is not None and index_path:
+            layout_matches = match_layout(layout_vector, doc_type, index_path)
 
     return {
         "doc_type": doc_type,
@@ -123,6 +127,8 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         "cardinalities": sorted(cardinalities),
         "layout_tags": sorted(layout_tags),
         "layout_vector": layout_vector,
+        "layout_matches": layout_matches,
+        "layout_matched": bool(layout_matches),
         "task_shape": task_shape or {},
         "unmatched_fields": [f["name"] for f in field_profile if f["matched_by"] == "none"],
     }
@@ -147,6 +153,79 @@ def embed_layout_vector(image_path, server_url, timeout=60):
         return resp["data"][0]["embedding"]
     except Exception:
         return None
+
+
+# ── 版式向量软匹配（对 layout_index.json 做 k-NN）─────────────────
+_INDEX_CACHE = None
+_INDEX_CACHE_PATH = None
+
+_DOC_TYPE_TO_INDEX = {
+    "packing_list": "pl_mixed", "pl": "pl_mixed", "装箱单": "pl_mixed",
+    "aco": "aco_non_goods", "托收": "aco_non_goods", "collection": "aco_non_goods",
+    "crn": "crn_mixed", "贷记": "crn_mixed", "credit": "crn_mixed",
+    "dbn": "dbn_mixed", "借记": "dbn_mixed", "debit": "dbn_mixed",
+    "do": "do_mixed", "提货": "do_mixed", "delivery": "do_mixed",
+    "sdn": "sdn_mixed", "发货": "sdn_mixed",
+    "so": "so_mixed", "销售订单": "so_mixed", "sales_order": "so_mixed",
+    "swb": "swb_mixed", "海运": "swb_mixed", "waybill": "swb_mixed", "提单": "swb_mixed",
+}
+
+
+def load_layout_index(index_path):
+    """加载 layout_index.json（进程内缓存，避免每次匹配重复解析 94MB）。"""
+    global _INDEX_CACHE, _INDEX_CACHE_PATH
+    if _INDEX_CACHE is None or _INDEX_CACHE_PATH != index_path:
+        with open(index_path, encoding="utf-8") as f:
+            _INDEX_CACHE = json.load(f)
+        _INDEX_CACHE_PATH = index_path
+    return _INDEX_CACHE
+
+
+def _resolve_index_doc(doc_type, index_keys):
+    """把语义 doc_type 映射到 index 的单据 key；映射不上返回 None。"""
+    dt = (doc_type or "").strip()
+    if dt in index_keys:
+        return dt
+    if dt in _DOC_TYPE_TO_INDEX:
+        return _DOC_TYPE_TO_INDEX[dt]
+    # 模糊：index key 的关键词出现在 doc_type 里
+    lowered = dt.lower()
+    for key in index_keys:
+        stem = key.split("_")[0]  # aco_non_goods -> aco
+        if stem and (stem in lowered or lowered in stem):
+            return key
+    return None
+
+
+def _cosine(a, b):
+    dot = sum(x * y for x, y in zip(a, b))
+    na = sum(x * x for x in a) ** 0.5
+    nb = sum(y * y for y in b) ** 0.5
+    return dot / (na * nb) if na and nb else 0.0
+
+
+def match_layout(layout_vector, doc_type, index_path, top_k=3, threshold=0.75):
+    """对 layout_index.json 做 k-NN 软匹配，返回 top-k 相似版式簇（不做硬归属）。
+
+    返回 [{"cluster_id", "score", "image"}, ...]，按相似度降序；无命中返回 []。
+    """
+    if layout_vector is None or not index_path:
+        return []
+    try:
+        index = load_layout_index(index_path)
+    except Exception:
+        return []
+    idx_doc = _resolve_index_doc(doc_type, index.get("docs", {}).keys())
+    if idx_doc is None:
+        return []
+    entries = index["docs"].get(idx_doc, [])
+    scored = []
+    for e in entries:
+        s = _cosine(layout_vector, e["vector"])
+        if s >= threshold:
+            scored.append({"cluster_id": e["cluster_id"], "score": round(s, 4), "image": e["image"]})
+    scored.sort(key=lambda x: -x["score"])
+    return scored[:top_k]
 
 
 def _infer_layout(doc_type):
