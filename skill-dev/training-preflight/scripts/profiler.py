@@ -51,12 +51,14 @@ def value_shape_heuristic(sample):
     return "short_text", []
 
 
-def profile_fields(fields, doc_type=None, task_shape=None):
+def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embedding_server=None):
     """字段列表 → 画像。
 
     fields: [{"name": str, "sample": str|None}, ...]
     task_shape: 可选，任务形态定性（{"lane","bbox_required","cross_page","triggers":[...]}），上下文类经验检索用。
-    返回 dict：字段级映射 + 聚合标签集合。
+    image_path: 可选，样例图路径；提供且 embedding_server 可达时，走版式向量级画像。
+    embedding_server: 可选，版式 embedding 服务地址（如 http://127.0.0.1:9031）。
+    返回 dict：字段级映射 + 聚合标签集合（含可选 layout_vector）。
     """
     concepts = load_concepts()
     alias_index = {}
@@ -108,6 +110,11 @@ def profile_fields(fields, doc_type=None, task_shape=None):
     # 版式标签：MVP 从 doc_type 推断（后续可接版式画像）
     layout_tags = _infer_layout(doc_type)
 
+    # 版式向量：提供样例图 + embedding 服务时，走真实视觉向量级（可选，失败回退标签级）
+    layout_vector = None
+    if image_path and embedding_server:
+        layout_vector = embed_layout_vector(image_path, embedding_server)
+
     return {
         "doc_type": doc_type,
         "fields": field_profile,
@@ -115,9 +122,31 @@ def profile_fields(fields, doc_type=None, task_shape=None):
         "value_shapes": sorted(vs for vs in value_shapes if vs),
         "cardinalities": sorted(cardinalities),
         "layout_tags": sorted(layout_tags),
+        "layout_vector": layout_vector,
         "task_shape": task_shape or {},
         "unmatched_fields": [f["name"] for f in field_profile if f["matched_by"] == "none"],
     }
+
+
+def embed_layout_vector(image_path, server_url, timeout=60):
+    """调版式 embedding 服务，返回图片的 2048 维版式向量（失败返回 None，调用方回退标签级）。"""
+    import base64
+    import urllib.request
+
+    try:
+        with open(image_path, "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("ascii")
+        payload = json.dumps({"inputs": [{"image_base64": b64}]}).encode("utf-8")
+        req = urllib.request.Request(
+            f"{server_url.rstrip('/')}/v1/embeddings",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        resp = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+        return resp["data"][0]["embedding"]
+    except Exception:
+        return None
 
 
 def _infer_layout(doc_type):

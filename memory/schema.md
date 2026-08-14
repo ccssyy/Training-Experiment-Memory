@@ -99,11 +99,22 @@ task_shape:                                         # 对象（可选）——�
   triggers: [gb_large_batch, vllm_runtime, cluster_split, field_align]  # 列表（训练配置/运行时/评估口径触发词）
 problem_pattern*: 行级归组数量字段在密集跨页表格易漏行   # 单值
 intervention_strategy*: 长表分段 + 行级守恒 + 连续重叠 core  # 单值
-applicability:                                      # 对象
-  preconditions: [...]                              # 列表（适用条件）
-  contraindications*: [...]                         # 列表（失效边界；必填；validated 必须非空）
+applicability:                                      # 对象（结构化适用性判定，见 docs/applicability-dimensions.md）
+  when:                                             # 对象（可采纳条件，AND 全满足才推荐）
+    lane: [goods]                                   # 列表（lane 一级判别：goods/non_goods）
+    languages: [zh, en, zh_en]                      # 列表（语言）
+    doc_types: [packing_list]                       # 列表（单据类型）
+    cardinality: [grouped_value]                    # 列表（字段基数，从 capability_tags 派生）
+    value_shape: [numeric_value]                    # 列表（值形态，从 capability_tags 派生）
+    layout: [dense_table, long_table]               # 列表（版式标签）
+    distribution: {support_min: 20}                 # 对象（字段分布门槛，可选）
+    data_scale: {min_samples: 2000}                 # 对象（数据规模，可选）
+  contraindications:                                # 列表（不适用条件，OR 命中任一即降权/过滤）
+    - when: {lane: non_goods}                       # 对象（结构化触发条件）
+      reason: 非货描迁移能力弱，本经验仅货描验证过  # 单值（不适用原因）
   confidence: high | medium | low                   # 单值（枚举）
   transfer_level: direct | structural | mechanism | context  # 单值（枚举）
+  expires_at: 2026-12-31                            # 单值（可选；过期降级为 observed）
 supported_by*: [CASE-0001, CASE-0007, ...]          # 列表（引用案例，≥1）
 outcome_aggregate: {typical_delta, cost_range, stability}  # 对象（typical_delta/cost_range/stability 均单值）
 ```
@@ -117,6 +128,7 @@ outcome_aggregate: {typical_delta, cost_range, stability}  # 对象（typical_de
 - `status=validated` 需：目标改善 + bbox/基数/归组无未解释退化 + 保护字段无回归 + evaluator 有效 + runtime raw 完整 + ID-OOD 可解释 + 人工验收（7 项）。**validated 是"干预验证通过"，不是"结论可信"。**
 - `status=rejected` 用于"验证失败的策略"，作为负经验（contraindication 素材）。
 - `status=unresolved` 用于"问题确认但无解决路径"的长期难例，显式建模防止反复试错。
+- `applicability.when` 判定为 AND（全满足才推荐）；`contraindications[].when` 判定为 OR（命中任一即降权/过滤）。画像缺失某维度时该维度不参与判定（宽松通过），不因缺数据误拒。
 - 迁移层级：`direct`（结构/bbox/版式/评估基本一致）> `structural`（结构一致版式差异）> `mechanism`（字段不同机制相同）> `context`（仅业务上下文相似，**不生成训练动作**）。
 
 ## 4. 状态机

@@ -30,6 +30,64 @@ def _value_shape_filter(claim, profile):
     return False
 
 
+def _applicability_check(claim, profile):
+    """结构化适用性判定。返回 (when_ok, contra_hits)。
+
+    when = AND（全满足才推荐）；contraindications = OR（命中任一即降权）。
+    画像缺失某维度 → 该维度宽松通过（不因缺数据误拒）。
+    """
+    app = claim.get("applicability") or {}
+    when = app.get("when") or {}
+    task_shape = profile.get("task_shape") or {}
+    prof_map = {"cardinality": "cardinalities", "value_shape": "value_shapes", "layout": "layout_tags"}
+
+    when_ok = True
+    # lane（画像单值 vs when 列表）
+    if when.get("lane"):
+        p_lane = task_shape.get("lane")
+        if p_lane and p_lane not in when["lane"]:
+            when_ok = False
+    # languages（画像列表 vs when 列表）
+    if when.get("languages"):
+        p_langs = task_shape.get("languages") or []
+        if p_langs and not (set(p_langs) & set(when["languages"])):
+            when_ok = False
+    # doc_types（画像单值 vs when 列表）
+    if when.get("doc_types"):
+        p_doc = profile.get("doc_type")
+        if p_doc and p_doc not in when["doc_types"]:
+            when_ok = False
+    # cardinality / value_shape / layout（画像列表 vs when 列表）
+    for dim, prof_key in prof_map.items():
+        if when.get(dim):
+            p_vals = set(profile.get(prof_key) or [])
+            if p_vals and not (p_vals & set(when[dim])):
+                when_ok = False
+    # distribution / data_scale：画像暂无，宽松通过（后续接入）
+
+    # contraindications OR
+    contra_hits = []
+    for c in app.get("contraindications") or []:
+        if isinstance(c, str):  # 旧格式字符串，跳过结构化判定
+            continue
+        if _cond_match(c.get("when") or {}, profile, task_shape):
+            contra_hits.append(c.get("reason", ""))
+
+    return when_ok, contra_hits
+
+
+def _cond_match(cond, profile, task_shape):
+    """单个 contraindication 条件是否命中（条件内所有键都命中才算命中）。"""
+    if cond.get("lane") and task_shape.get("lane") != cond["lane"]:
+        return False
+    for dim, prof_key in (("cardinality", "cardinalities"), ("value_shape", "value_shapes"), ("layout", "layout_tags")):
+        if cond.get(dim):
+            p = set(profile.get(prof_key) or [])
+            if p and not (p & set(cond[dim])):
+                return False
+    return True
+
+
 def score_claim(claim, profile):
     """规则打分。返回 (score, matched_tags)。
 
@@ -90,18 +148,27 @@ def retrieve(profile, top_k=5):
     for c in claims:
         if _value_shape_filter(c, profile):
             continue  # 值形态不匹配直接过滤
+        when_ok, contra_hits = _applicability_check(c, profile)
+        if not when_ok:
+            continue  # when 不满足 → 不推荐
         score, matched = score_claim(c, profile)
         if score <= 0:
             continue
+        if contra_hits:
+            score = max(0.0, score - 0.5)  # 命中失效边界 → 显著降权
         results.append({
             "claim_id": c["claim_id"],
             "status": c["status"],
-            "score": score,
+            "score": round(score, 4),
             "matched_tags": matched,
             "transfer_level": c["applicability"].get("transfer_level"),
             "problem_pattern": c["problem_pattern"],
             "intervention_strategy": c["intervention_strategy"],
-            "contraindications": c["applicability"].get("contraindications", []),
+            "contraindications": [
+                x.get("reason", str(x)) if isinstance(x, dict) else x
+                for x in c["applicability"].get("contraindications", [])
+            ],
+            "contra_hits": contra_hits,
             "supported_by": c["supported_by"],
         })
     results.sort(key=lambda r: -r["score"])
