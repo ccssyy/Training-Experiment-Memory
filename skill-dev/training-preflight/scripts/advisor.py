@@ -30,7 +30,15 @@ def render_card(profile, ranked):
     lines.append(f"- 单据类型：{profile.get('doc_type') or '未知'}")
     lines.append(f"- 命中语义标签：{', '.join(profile.get('semantic_tags', [])) or '无'}")
     lines.append(f"- 值形态：{', '.join(profile.get('value_shapes', [])) or '无'}")
-    lines.append(f"- 版式标签：{', '.join(profile.get('layout_tags', [])) or '无'}")
+    vis_layout = profile.get('layout_tags_visual') or profile.get('layout_tags') or []
+    lines.append(f"- 版式标签：{', '.join(vis_layout) or '无'}")
+    if profile.get("layout_doc_match"):
+        lines.append(f"- 版式视觉确认：{profile['layout_doc_match']}（样例图最像该单据）")
+    if profile.get("layout_doc_conflict"):
+        lines.append(
+            f"- 警告：声明的单据类型（{profile.get('doc_type')}）与样例图版式不一致，"
+            f"视觉判定更像 {profile.get('layout_doc_match')}，请核对是否标错或拿错样例图"
+        )
     if profile.get("unmatched_fields"):
         lines.append(f"- 未匹配字段（需人工确认语义）：{', '.join(profile['unmatched_fields'])}")
     lines.append("")

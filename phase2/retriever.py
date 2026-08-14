@@ -141,8 +141,23 @@ def _trigger_overlap(claim, profile, matched):
     return len(hit)
 
 
+def _effective_profile(profile):
+    """增强画像：版式标签视觉优先。
+
+    有视觉确认（layout_tags_visual 非空）时，版式标签以视觉为准（真实视觉判定，
+    比 doc_type 粗推可靠）；无视觉确认才用粗推标签。避免「声明 doc_type 标错时，
+    粗推标签仍救活不相关经验」的问题。
+    """
+    p = dict(profile)
+    vis = profile.get("layout_tags_visual") or []
+    if vis:
+        p["layout_tags"] = sorted(vis)
+    return p
+
+
 def retrieve(profile, top_k=5):
     """返回 top-k Claim 列表，含分数、匹配标签、transfer_level。"""
+    profile = _effective_profile(profile)
     claims = load_claims()
     results = []
     for c in claims:

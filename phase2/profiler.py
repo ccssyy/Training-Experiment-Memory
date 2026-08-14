@@ -114,10 +114,26 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
     # 版式向量 + 软匹配：提供样例图 + embedding 服务时，走真实视觉向量级（可选，失败回退标签级）
     layout_vector = None
     layout_matches = []
+    layout_doc_match = None
+    layout_tags_visual = []
+    layout_doc_conflict = False
     if image_path and embedding_server:
         layout_vector = embed_layout_vector(image_path, embedding_server)
         if layout_vector is not None and index_path:
             layout_matches = match_layout(layout_vector, doc_type, index_path)
+            # 跨单据匹配：视觉确认「新图最像哪个单据」，比 doc_type 口头声明可靠
+            cross = match_layout_cross(layout_vector, index_path, top_k=1, threshold=0.6)
+            if cross:
+                layout_doc_match = cross[0]["doc"]
+                vis_doc_type = _INDEX_TO_DOC_TYPE.get(layout_doc_match, layout_doc_match)
+                layout_tags_visual = _infer_layout(vis_doc_type)
+                # 冲突：声明的 doc_type 与样例图视觉单据不一致（可能标错/拿错样例图）
+                try:
+                    index = load_layout_index(index_path)
+                    declared_idx = _resolve_index_doc(doc_type, index.get("docs", {}).keys())
+                    layout_doc_conflict = declared_idx is not None and declared_idx != layout_doc_match
+                except Exception:
+                    pass
 
     return {
         "doc_type": doc_type,
@@ -129,6 +145,9 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         "layout_vector": layout_vector,
         "layout_matches": layout_matches,
         "layout_matched": bool(layout_matches),
+        "layout_doc_match": layout_doc_match,
+        "layout_tags_visual": sorted(layout_tags_visual),
+        "layout_doc_conflict": layout_doc_conflict,
         "task_shape": task_shape or {},
         "unmatched_fields": [f["name"] for f in field_profile if f["matched_by"] == "none"],
     }
@@ -224,6 +243,41 @@ def match_layout(layout_vector, doc_type, index_path, top_k=3, threshold=0.75):
         s = _cosine(layout_vector, e["vector"])
         if s >= threshold:
             scored.append({"cluster_id": e["cluster_id"], "score": round(s, 4), "image": e["image"]})
+    scored.sort(key=lambda x: -x["score"])
+    return scored[:top_k]
+
+
+# index 单据 key → 语义 doc_type（供 _infer_layout 复用，视觉确认单据后推版式标签）
+_INDEX_TO_DOC_TYPE = {
+    "pl_mixed": "packing_list",
+    "so_mixed": "sales_order",
+    "do_mixed": "delivery_order",
+    "crn_mixed": "credit_note",
+    "dbn_mixed": "debit_note",
+    "aco_non_goods": "collection_order",
+    "sdn_mixed": "delivery_note",
+    "swb_mixed": "sea_waybill",
+}
+
+
+def match_layout_cross(layout_vector, index_path, top_k=1, threshold=0.6):
+    """跨所有单据匹配，返回最像的 top-k 版式簇（含 doc 字段）。
+
+    用于「视觉确认单据类型」：跨单据区分度强（0.42~0.60），比 doc_type 口头声明更可靠。
+    返回 [{"doc", "cluster_id", "score", "image"}, ...]；无命中返回 []。
+    """
+    if layout_vector is None or not index_path:
+        return []
+    try:
+        index = load_layout_index(index_path)
+    except Exception:
+        return []
+    scored = []
+    for doc, entries in index.get("docs", {}).items():
+        for e in entries:
+            s = _cosine(layout_vector, e["vector"])
+            if s >= threshold:
+                scored.append({"doc": doc, "cluster_id": e["cluster_id"], "score": round(s, 4), "image": e["image"]})
     scored.sort(key=lambda x: -x["score"])
     return scored[:top_k]
 
