@@ -1,0 +1,19 @@
+{
+  "semantic": [
+    "quantity", "monetary", "weight", "size", "parcel", "identifier", "item",
+    "party", "address", "temporal", "unit", "status",
+    "transport", "location", "bank", "payment", "term"
+  ],
+  "value_shape": [
+    "numeric_value", "numeric_unit", "currency_amount", "code_value",
+    "date_value", "short_text", "long_text", "mixed_value"
+  ],
+  "cardinality": [
+    "single_value", "multi_value", "grouped_value", "row_aligned",
+    "cross_page_group", "one_to_many", "per_value_bbox"
+  ],
+  "layout": [
+    "dense_table", "long_table", "multi_block", "labeled_value",
+    "cross_page", "rotated", "handwritten", "stamped"
+  ]
+}
