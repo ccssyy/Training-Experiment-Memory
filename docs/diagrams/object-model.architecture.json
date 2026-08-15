@@ -2,33 +2,35 @@
   "schema_version": 1,
   "diagram_type": "architecture",
   "meta": {
-    "title": "对象模型三层",
-    "subtitle": "EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（通用模式），检索键与字段语义锚",
+    "title": "对象模型四层",
+    "subtitle": "EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（实例）→ Mechanism（机制），检索键与字段语义锚",
     "output": "object-model.html"
   },
   "components": [
-    { "id": "event", "type": "backend", "label": "EvidenceEvent", "sublabel": "训练事实 · 不可变", "pos": [40, 260], "size": [170, 64] },
-    { "id": "case", "type": "backend", "label": "ExperienceCase", "sublabel": "单次观察 · 绑证据", "pos": [290, 260], "size": [170, 64] },
-    { "id": "claim", "type": "backend", "label": "PatternClaim", "sublabel": "通用模式 · 有状态机", "pos": [540, 260], "size": [170, 64] },
+    { "id": "event", "type": "backend", "label": "EvidenceEvent", "sublabel": "训练事实 · 不可变", "pos": [30, 260], "size": [150, 64] },
+    { "id": "case", "type": "backend", "label": "ExperienceCase", "sublabel": "单次观察 · 绑证据", "pos": [210, 260], "size": [150, 64] },
+    { "id": "claim", "type": "backend", "label": "PatternClaim", "sublabel": "实例 · 有状态机", "pos": [390, 260], "size": [150, 64] },
+    { "id": "mechanism", "type": "backend", "label": "Mechanism", "sublabel": "机制 · 跨字段类型", "pos": [570, 260], "size": [170, 64] },
 
-    { "id": "tags", "type": "cloud", "label": "通用能力标签", "sublabel": "语义·值形态·基数·版式", "pos": [540, 100], "size": [190, 56], "tag": "检索键" },
-    { "id": "concepts", "type": "cloud", "label": "字段语义概念", "sublabel": "85 概念 · 别名 + 值形态", "pos": [290, 100], "size": [190, 56], "tag": "匹配锚" },
+    { "id": "tags", "type": "cloud", "label": "通用能力标签", "sublabel": "语义·值形态·基数·版式", "pos": [590, 100], "size": [190, 56], "tag": "检索键" },
+    { "id": "concepts", "type": "cloud", "label": "字段语义概念", "sublabel": "85 概念 · 别名 + 值形态", "pos": [370, 100], "size": [190, 56], "tag": "匹配锚" },
 
     { "id": "store", "type": "database", "label": "memory.db", "sublabel": "独立存储", "pos": [800, 260], "size": [130, 64] }
   ],
   "boundaries": [
-    { "kind": "region", "label": "记忆数据（memory/）", "wraps": ["event", "case", "claim", "tags", "concepts"] }
+    { "kind": "region", "label": "记忆数据（memory/）", "wraps": ["event", "case", "claim", "mechanism", "tags", "concepts"] }
   ],
   "connections": [
-    { "from": "event", "to": "case", "label": "关联/创建", "variant": "default" },
-    { "from": "case", "to": "claim", "label": "多案例聚合", "variant": "emphasis" },
+    { "from": "event", "to": "case", "label": "关联/创建", "variant": "default", "labelAt": [195, 238] },
+    { "from": "case", "to": "claim", "label": "多案例聚合", "variant": "emphasis", "labelAt": [375, 238] },
+    { "from": "claim", "to": "mechanism", "label": "多实例归纳", "variant": "emphasis", "labelAt": [555, 238] },
     { "from": "claim", "to": "tags", "label": "标注", "variant": "dashed", "fromSide": "top", "toSide": "bottom" },
-    { "from": "concepts", "to": "tags", "label": "概念→标签", "variant": "dashed" },
-    { "from": "claim", "to": "store", "label": "落库", "variant": "emphasis", "fromSide": "right", "toSide": "left" }
+    { "from": "concepts", "to": "tags", "label": "概念→标签", "variant": "dashed", "labelAt": [575, 170] },
+    { "from": "mechanism", "to": "store", "label": "落库", "variant": "emphasis", "fromSide": "right", "toSide": "left" }
   ],
   "cards": [
-    { "dot": "emerald", "title": "三层分离", "items": ["事实（Event）、证据（Case）、模式（Claim）三层不混", "单次实验 ≠ 通用规律，多 Case 聚合才升级 Claim"] },
-    { "dot": "cyan", "title": "检索 vs 追溯", "items": ["检索/推荐用 Claim（跨单据通用）", "追溯用 Case（回到具体 run）", "回灌用 Event（追加事实）"] },
+    { "dot": "emerald", "title": "四层分离", "items": ["事实（Event）、证据（Case）、实例（Claim）、机制（Mechanism）四层不混", "单次实验 ≠ 通用规律，多 Case 聚合才升级 Claim", "多 Claim 归纳才升级 Mechanism"] },
+    { "dot": "cyan", "title": "机制层跨字段类型", "items": ["Mechanism 只基于稳定结构属性（语义/基数/值形态/版式/跨页）", "不碰易变的字段类型划分（lane/标注范围）", "字段类型变更只动 Claim 引用，机制本体零改动"] },
     { "dot": "amber", "title": "检索键", "items": ["能力标签与字段名解耦", "字段语义概念是 L3 字段层匹配锚"] }
   ]
 }

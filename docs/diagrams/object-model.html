@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="generator" content="archify 2.11.0">
-  <title>对象模型三层 Diagram</title>
+  <title>对象模型四层 Diagram</title>
   <script>
     // Resolve the theme before first paint so light-preference users don't
     // see a dark flash. The toolbar script below re-applies with UI state.
@@ -525,14 +525,14 @@
     <div class="header">
       <div class="header-row">
         <div class="pulse-dot"></div>
-        <h1>对象模型三层</h1>
+        <h1>对象模型四层</h1>
       </div>
-      <p class="subtitle">EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（通用模式），检索键与字段语义锚</p>
+      <p class="subtitle">EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（实例）→ Mechanism（机制），检索键与字段语义锚</p>
     </div>
 
     <!-- Main Diagram -->
     <div class="diagram-container">
-      <svg viewBox="0 0 970 412" role="img" aria-label="对象模型三层 — EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（通用模式），检索键与字段语义锚 (architecture diagram)">
+      <svg viewBox="0 0 970 412" role="img" aria-label="对象模型四层 — EvidenceEvent（事实）→ ExperienceCase（证据）→ PatternClaim（实例）→ Mechanism（机制），检索键与字段语义锚 (architecture diagram)">
         <!-- Definitions -->
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -556,43 +556,49 @@
         <rect width="100%" height="100%" fill="url(#grid)" />
 
         <!-- Boundaries (behind everything) -->
-        <rect x="10" y="70" width="750" height="274" rx="12" class="c-region" stroke-width="1"/>
-        <text x="18" y="88" class="t-cloud" font-size="9" font-weight="600">记忆数据（memory/）</text>
+        <rect x="0" y="70" width="810" height="274" rx="12" class="c-region" stroke-width="1"/>
+        <text x="8" y="88" class="t-cloud" font-size="9" font-weight="600">记忆数据（memory/）</text>
 
         <!-- Connection paths (before components for correct z-order) -->
-        <path d="M 210 292 L 290 292" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
-        <path d="M 460 292 L 540 292" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
-        <path d="M 625 260 L 627.5 260 Q 630 260 630 257.5 L 630 158.5 Q 630 156 632.5 156 L 635 156" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 480 128 L 540 128" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
-        <path d="M 710 292 L 800 292" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 180 292 L 210 292" class="a-default" stroke-width="1.5" marker-end="url(#arrowhead)"/>
+        <path d="M 360 292 L 390 292" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 540 292 L 570 292" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
+        <path d="M 465 260 L 567 260 Q 575 260 575 252 L 575 164 Q 575 156 583 156 L 685 156" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 560 128 L 590 128" class="a-dashed" stroke-width="1.5" marker-end="url(#arrowhead-dashed)"/>
+        <path d="M 740 292 L 800 292" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
 
         <!-- Components -->
-        <rect x="40" y="260" width="170" height="64" rx="6" class="c-mask"/>
-        <rect x="40" y="260" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="125" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">EvidenceEvent</text>
-        <text x="125" y="306" class="t-muted" font-size="9" text-anchor="middle">训练事实 · 不可变</text>
+        <rect x="30" y="260" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="30" y="260" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="105" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">EvidenceEvent</text>
+        <text x="105" y="306" class="t-muted" font-size="9" text-anchor="middle">训练事实 · 不可变</text>
 
-        <rect x="290" y="260" width="170" height="64" rx="6" class="c-mask"/>
-        <rect x="290" y="260" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="375" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ExperienceCase</text>
-        <text x="375" y="306" class="t-muted" font-size="9" text-anchor="middle">单次观察 · 绑证据</text>
+        <rect x="210" y="260" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="210" y="260" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="285" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">ExperienceCase</text>
+        <text x="285" y="306" class="t-muted" font-size="9" text-anchor="middle">单次观察 · 绑证据</text>
 
-        <rect x="540" y="260" width="170" height="64" rx="6" class="c-mask"/>
-        <rect x="540" y="260" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
-        <text x="625" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PatternClaim</text>
-        <text x="625" y="306" class="t-muted" font-size="9" text-anchor="middle">通用模式 · 有状态机</text>
+        <rect x="390" y="260" width="150" height="64" rx="6" class="c-mask"/>
+        <rect x="390" y="260" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="465" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">PatternClaim</text>
+        <text x="465" y="306" class="t-muted" font-size="9" text-anchor="middle">实例 · 有状态机</text>
 
-        <rect x="540" y="100" width="190" height="56" rx="6" class="c-mask"/>
-        <rect x="540" y="100" width="190" height="56" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="635" y="126" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">通用能力标签</text>
-        <text x="635" y="142" class="t-muted" font-size="9" text-anchor="middle">语义·值形态·基数·版式</text>
-        <text x="635" y="148" class="t-cloud" font-size="7" text-anchor="middle">检索键</text>
+        <rect x="570" y="260" width="170" height="64" rx="6" class="c-mask"/>
+        <rect x="570" y="260" width="170" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
+        <text x="655" y="290" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">Mechanism</text>
+        <text x="655" y="306" class="t-muted" font-size="9" text-anchor="middle">机制 · 跨字段类型</text>
 
-        <rect x="290" y="100" width="190" height="56" rx="6" class="c-mask"/>
-        <rect x="290" y="100" width="190" height="56" rx="6" class="c-cloud" stroke-width="1.5"/>
-        <text x="385" y="126" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">字段语义概念</text>
-        <text x="385" y="142" class="t-muted" font-size="9" text-anchor="middle">85 概念 · 别名 + 值形态</text>
-        <text x="385" y="148" class="t-cloud" font-size="7" text-anchor="middle">匹配锚</text>
+        <rect x="590" y="100" width="190" height="56" rx="6" class="c-mask"/>
+        <rect x="590" y="100" width="190" height="56" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="685" y="126" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">通用能力标签</text>
+        <text x="685" y="142" class="t-muted" font-size="9" text-anchor="middle">语义·值形态·基数·版式</text>
+        <text x="685" y="148" class="t-cloud" font-size="7" text-anchor="middle">检索键</text>
+
+        <rect x="370" y="100" width="190" height="56" rx="6" class="c-mask"/>
+        <rect x="370" y="100" width="190" height="56" rx="6" class="c-cloud" stroke-width="1.5"/>
+        <text x="465" y="126" class="t-primary" font-size="11" font-weight="600" text-anchor="middle">字段语义概念</text>
+        <text x="465" y="142" class="t-muted" font-size="9" text-anchor="middle">85 概念 · 别名 + 值形态</text>
+        <text x="465" y="148" class="t-cloud" font-size="7" text-anchor="middle">匹配锚</text>
 
         <rect x="800" y="260" width="130" height="64" rx="6" class="c-mask"/>
         <rect x="800" y="260" width="130" height="64" rx="6" class="c-database" stroke-width="1.5"/>
@@ -600,16 +606,18 @@
         <text x="865" y="306" class="t-muted" font-size="9" text-anchor="middle">独立存储</text>
 
         <!-- Connection labels -->
-        <rect x="223.4" y="272" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-        <text x="250" y="282" class="t-muted" font-size="8" text-anchor="middle">关联/创建</text>
-        <rect x="471" y="272" width="58" height="14" rx="3" class="c-mask"/>
-        <text x="500" y="282" class="t-backend" font-size="8" text-anchor="middle">多案例聚合</text>
-        <rect x="615" y="188" width="30" height="14" rx="3" class="c-mask"/>
-        <text x="630" y="198" class="t-messagebus" font-size="8" text-anchor="middle">标注</text>
-        <rect x="483.4" y="108" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
-        <text x="510" y="118" class="t-messagebus" font-size="8" text-anchor="middle">概念→标签</text>
-        <rect x="740" y="272" width="30" height="14" rx="3" class="c-mask"/>
-        <text x="755" y="282" class="t-backend" font-size="8" text-anchor="middle">落库</text>
+        <rect x="168.4" y="228" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+        <text x="195" y="238" class="t-muted" font-size="8" text-anchor="middle">关联/创建</text>
+        <rect x="346" y="228" width="58" height="14" rx="3" class="c-mask"/>
+        <text x="375" y="238" class="t-backend" font-size="8" text-anchor="middle">多案例聚合</text>
+        <rect x="526" y="228" width="58" height="14" rx="3" class="c-mask"/>
+        <text x="555" y="238" class="t-backend" font-size="8" text-anchor="middle">多实例归纳</text>
+        <rect x="560" y="188" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="575" y="198" class="t-messagebus" font-size="8" text-anchor="middle">标注</text>
+        <rect x="548.4" y="160" width="53.199999999999996" height="14" rx="3" class="c-mask"/>
+        <text x="575" y="170" class="t-messagebus" font-size="8" text-anchor="middle">概念→标签</text>
+        <rect x="755" y="272" width="30" height="14" rx="3" class="c-mask"/>
+        <text x="770" y="282" class="t-backend" font-size="8" text-anchor="middle">落库</text>
 
         <!-- Legend -->
         <text x="40" y="383" class="t-primary" font-size="9" font-weight="600">Legend</text>
@@ -627,23 +635,24 @@
       <div class="card">
         <div class="card-header">
           <div class="card-dot emerald"></div>
-          <h3>三层分离</h3>
+          <h3>四层分离</h3>
         </div>
         <ul>
-          <li>&bull; 事实（Event）、证据（Case）、模式（Claim）三层不混</li>
+          <li>&bull; 事实（Event）、证据（Case）、实例（Claim）、机制（Mechanism）四层不混</li>
           <li>&bull; 单次实验 ≠ 通用规律，多 Case 聚合才升级 Claim</li>
+          <li>&bull; 多 Claim 归纳才升级 Mechanism</li>
         </ul>
       </div>
 
       <div class="card">
         <div class="card-header">
           <div class="card-dot cyan"></div>
-          <h3>检索 vs 追溯</h3>
+          <h3>机制层跨字段类型</h3>
         </div>
         <ul>
-          <li>&bull; 检索/推荐用 Claim（跨单据通用）</li>
-          <li>&bull; 追溯用 Case（回到具体 run）</li>
-          <li>&bull; 回灌用 Event（追加事实）</li>
+          <li>&bull; Mechanism 只基于稳定结构属性（语义/基数/值形态/版式/跨页）</li>
+          <li>&bull; 不碰易变的字段类型划分（lane/标注范围）</li>
+          <li>&bull; 字段类型变更只动 Claim 引用，机制本体零改动</li>
         </ul>
       </div>
 

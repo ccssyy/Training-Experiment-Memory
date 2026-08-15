@@ -16,7 +16,7 @@
 |---|---|---|
 | 系统架构 | `diagrams/system-architecture.html` | 消费方 → 接入层 → 核心层（画像/检索/建议/回灌）→ 独立存储；单向依赖 |
 | 完整闭环 | `diagrams/feedback-loop.html` | 训练前推荐 → 训练 → 训练后回灌 → 写回记忆库 → 下次再命中 |
-| 对象模型 | `diagrams/object-model.html` | EvidenceEvent → ExperienceCase → PatternClaim 三层 + 能力标签/字段语义概念 |
+| 对象模型 | `diagrams/object-model.html` | EvidenceEvent → ExperienceCase → PatternClaim → Mechanism 四层 + 能力标签/字段语义概念 |
 | 状态机 | `diagrams/claim-lifecycle.html` | Claim 状态转换：candidate → confirmed → validated / rejected / unresolved / superseded |
 
 ## 3. 分层架构
@@ -47,23 +47,34 @@
 
 **独立化原则**：核心层不 import 任何消费方代码；消费方通过适配接口**单向依赖** memory。
 
-## 4. 对象模型三层
+## 4. 对象模型四层
 
 | 对象 | 职责 | 生命周期 |
 |---|---|---|
 | `EvidenceEvent` | 训练事实（badcase 结论 + 指标 + 评估） | 追加式，不可变 |
 | `ExperienceCase` | 单次实验观察，绑定证据 | 不可变 |
-| `PatternClaim` | 多案例聚合的通用模式 | 有状态机（见 §5） |
+| `PatternClaim` | 机制在某字段类型下的实例，多案例聚合 | 有状态机（见 §5） |
+| `Mechanism` | 跨字段类型的稳定方案，多实例归纳 | active/merged/superseded/deprecated |
 
-**检索/推荐用 Claim，追溯用 Case，回灌用 Event。** 单次实验结果 ≠ 通用规律，只有多 Case 聚合、且明确失效边界，才升级为可迁移 Claim。
+**检索/推荐用 Claim（实例）+ Mechanism（机制），追溯用 Case，回灌用 Event。**
+
+- 单次实验结果 ≠ 通用规律：多 Case 聚合 → 可迁移 Claim。
+- 多 Claim 归纳 → Mechanism：机制层只基于**稳定结构属性**（语义/基数/值形态/版式/跨页），**不碰易变的字段类型划分**（lane/标注范围）。字段类型划分是独立 Taxonomy 层，变更只动 Claim 引用，机制本体零改动。
 
 ## 5. 状态机
 
+Claim：
 ```
 candidate ──► confirmed ──► validated ──► superseded
      │              │
      ├──► rejected ─┴──► (负经验)
      └──► unresolved（长期难例，阻断重试）
+```
+
+Mechanism：
+```
+active ──► merged ──► superseded（保留旧记录）
+   └──────► deprecated（被新机制取代，不再推荐）
 ```
 
 - `candidate`：待验证候选，不参与正式检索。
@@ -74,7 +85,12 @@ candidate ──► confirmed ──► validated ──► superseded
 
 ## 6. 检索链与迁移
 
-新单据字段 → 三路匹配（别名表 / 值形态启发 / 语义向量 bge-m3）→ canonical 字段语义概念 → 打能力标签 → 命中 Claim（含 transfer_level 迁移层级）。
+新单据字段 → 三路匹配（别名表 / 值形态启发 / 语义向量 bge-m3）→ canonical 字段语义概念 → 打能力标签 → **命中 Mechanism（稳定结构属性）→ 定位 Claim 实例（lane/doc_types）**，含 transfer_level 迁移层级。
+
+**两级检索**：
+- **机制层**（Mechanism）：按稳定结构属性（语义/基数/值形态/版式/跨页）命中，跨字段类型。
+- **实例层**（Claim）：在命中机制下按易变维度（lane/doc_types/languages）定位具体实例。
+- 命中机制但无匹配实例 → 推荐机制 + 标注「当前字段类型无验证实例，谨慎」。
 
 **关键机制**：能力标签与字段名解耦——装箱单的"行级归组数量字段"经验通过 `grouped_value + row_aligned + dense_table` 标签迁移到任何同类密集跨页表格单据，而非靠"装箱单"字段名。
 
@@ -90,7 +106,7 @@ candidate ──► confirmed ──► validated ──► superseded
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
-| Phase 1 | 记忆数据（24 Case + 18 Claim + 85 概念 + 标签） | ✅ |
-| Phase 2 | 训练前推荐（画像 + 规则检索 + 建议卡） | ✅ MVP |
+| Phase 1 | 记忆数据（32 Case + 26 Claim + 5 Mechanism + 85 概念 + 标签） | ✅ |
+| Phase 2 | 训练前推荐（画像 + 机制/规则检索 + 建议卡 + 版式视觉确认） | ✅ MVP |
 | Phase 3 | 训练后回灌（EvidenceEvent + 验证门槛 + curator） | ✅ 框架 + dry-run |
 | 待做 | 向量检索（bge-m3/CLIP）、ATF 接入、真实训练验证 | P4 / 后续 |
