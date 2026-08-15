@@ -58,6 +58,8 @@ echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,
 | aco | 托收 | so | 销售订单 |
 | crn | 贷记通知 | dbn | 借记通知 |
 
+> 注意：数据目录名里的后缀（如 `swb_mixed`、`aco_non_goods`）**不是单据类型的一部分**，而是标注字段范围——`_mixed`=全字段标签、`_goods`=仅货描字段、`_non_goods`=仅非货描字段。单据类型只是前缀（`swb`/`aco` 等）。
+
 ### 第 3 步：把建议卡转成自然语言回复
 
 脚本输出是结构化 Markdown。转述给用户时：

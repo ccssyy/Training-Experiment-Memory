@@ -125,8 +125,8 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
             cross = match_layout_cross(layout_vector, index_path, top_k=1, threshold=0.6)
             if cross:
                 layout_doc_match = cross[0]["doc"]
-                # 实测版式标签（glm-vision 核过），兜底回 _infer_layout 规则
-                layout_tags_visual = _INDEX_DOC_LAYOUT.get(layout_doc_match, _infer_layout(doc_type))
+                # 实测版式标签（glm-vision 核过，按单据类型查），兜底回 _infer_layout 规则
+                layout_tags_visual = _DOC_LAYOUT.get(_doc_type_of(layout_doc_match), _infer_layout(doc_type))
                 # 冲突：声明的 doc_type 与样例图视觉单据不一致（可能标错/拿错样例图）
                 try:
                     index = load_layout_index(index_path)
@@ -146,7 +146,10 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         "layout_matches": layout_matches,
         "layout_matched": bool(layout_matches),
         "layout_doc_match": layout_doc_match,
+        "layout_doc_match_type": _doc_type_of(layout_doc_match),
         "layout_doc_match_cn": doc_cn(layout_doc_match),
+        "layout_doc_scope": _doc_scope_of(layout_doc_match),
+        "layout_doc_scope_cn": _SCOPE_CN.get(_doc_scope_of(layout_doc_match), ""),
         "layout_tags_visual": sorted(layout_tags_visual),
         "layout_doc_conflict": layout_doc_conflict,
         "task_shape": task_shape or {},
@@ -248,40 +251,61 @@ def match_layout(layout_vector, doc_type, index_path, top_k=3, threshold=0.75):
     return scored[:top_k]
 
 
-# index 单据 key → 中文名（展示用）
-_INDEX_DOC_CN = {
-    "pl_mixed": "装箱单",
-    "swb_mixed": "海运单",
-    "aco_non_goods": "托收",
-    "crn_mixed": "贷记通知",
-    "dbn_mixed": "借记通知",
-    "do_mixed": "提货单",
-    "sdn_mixed": "发货单",
-    "so_mixed": "销售订单",
+# 单据类型 → 中文名（单据类型不含后缀；_mixed/_goods/_non_goods 是标注字段范围，非类型）
+_DOC_CN = {
+    "pl": "装箱单",
+    "swb": "海运单",
+    "aco": "托收",
+    "crn": "贷记通知",
+    "dbn": "借记通知",
+    "do": "提货单",
+    "sdn": "发货单",
+    "so": "销售订单",
+}
+
+# 标注字段范围后缀 → 中文说明
+_SCOPE_CN = {
+    "mixed": "全字段",
+    "goods": "仅货描",
+    "non_goods": "仅非货描",
 }
 
 
-def doc_cn(doc):
-    """单据 key/缩写 → 中文名（含带 _mixed/_non_goods 后缀的 index key 归一化）。"""
+def _doc_type_of(doc):
+    """目录名（swb_mixed / aco_non_goods）→ 单据类型（swb / aco）。后缀是标注范围，非类型。"""
     if not doc:
         return ""
-    if doc in _INDEX_DOC_CN:
-        return _INDEX_DOC_CN[doc]
-    # 归一化：pl_mixed -> pl；aco_non_goods -> aco
-    stem = doc.split("_")[0]
-    return _INDEX_DOC_CN.get(stem, doc)
+    if doc in _DOC_CN:
+        return doc
+    for t in _DOC_CN:
+        if doc.startswith(t + "_"):
+            return t
+    return doc.split("_")[0]
 
 
-# index 单据 key → 版式结构标签（glm-vision 核 8 单据 cluster_00 代表图所得，2026-08-15）
-_INDEX_DOC_LAYOUT = {
-    "pl_mixed": ["dense_table"],
-    "swb_mixed": ["multi_block", "cross_page"],
-    "aco_non_goods": ["dense_table"],
-    "crn_mixed": ["multi_block"],
-    "dbn_mixed": ["dense_table"],
-    "do_mixed": ["dense_table"],
-    "sdn_mixed": ["long_table"],
-    "so_mixed": ["long_table", "cross_page"],
+def _doc_scope_of(doc):
+    """目录名 → 标注范围（mixed/goods/non_goods），无后缀返回空。"""
+    t = _doc_type_of(doc)
+    if t and doc != t:
+        return doc[len(t) + 1:]
+    return ""
+
+
+def doc_cn(doc):
+    """单据目录名/缩写 → 中文名（去掉标注范围后缀）。"""
+    return _DOC_CN.get(_doc_type_of(doc), doc or "")
+
+
+# 单据类型 → 版式结构标签（glm-vision 核 8 单据代表图所得，2026-08-15）
+_DOC_LAYOUT = {
+    "pl": ["dense_table"],
+    "swb": ["multi_block", "cross_page"],
+    "aco": ["dense_table"],
+    "crn": ["multi_block"],
+    "dbn": ["dense_table"],
+    "do": ["dense_table"],
+    "sdn": ["long_table"],
+    "so": ["long_table", "cross_page"],
 }
 
 
