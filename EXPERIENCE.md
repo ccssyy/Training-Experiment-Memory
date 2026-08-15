@@ -64,16 +64,47 @@ phase2/data/
 
 `memory/*.md` 是人读版本（experience-cases.md / pattern-claims.md / field-semantics.md / schema.md）。
 
-## 视觉版（可选，需 embedding 服务）
+## 视觉版（需 embedding 服务）
 
-模型在公共目录 `/data/LLM_model/`（Qwen3-VL-Embedding-2B、bge-m3）。当前开发者版本已起服务：
+模型在公共目录 `/data/LLM_model/`（Qwen3-VL-Embedding-2B、bge-m3）。
 
-| 服务 | 端口 | 模型 | 用途 |
-|---|---|---|---|
-| 版式向量 | 9031 | Qwen3-VL-Embedding-2B | 样例图 → 版式结构向量（跨单据视觉确认） |
-| 字段语义向量 | 9033 | bge-m3 | 字段名 → 语义向量（别名表未命中兜底） |
+**方案一（推荐，最省事）：版式共享 + bge 自起**
 
-给 profiler 传 `image_path` + `embedding_server` + `index_path` 即走视觉路；不传则纯字段版（零依赖）。
+版式服务已由开发者起好并共享（容器 IP `172.18.0.8`，同 docker 网络可直接访问），你只需自起 bge：
+
+```bash
+# 起 bge-m3（字段语义向量，568M，加载快）
+PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python   # 复用共享 env（含 transformers+fastapi）
+cd /data/collab/training-experience-memory/bge_embedding_server
+MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
+curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
+```
+
+访问地址：版式 `172.18.0.8:9031`，bge `127.0.0.1:9033`。
+
+**方案二（完全隔离，自起全部服务）**
+
+前提：你的容器已挂载 `/data`（`-v /data:/data`）+ GPU 权限（`--gpus all`）。
+
+```bash
+PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python
+
+# 1. 起版式服务（qwen3-vl-embedding-2b，占一张卡，加载约 75s）
+cd /data/collab/training-experience-memory/embedding_server
+MODEL_PATH=/data/LLM_model/Qwen3-VL-Embedding-2B PORT=9031 GPU_IDS=<卡号A> nohup $PY app.py > server.log 2>&1 &
+
+# 2. 起字段语义服务（bge-m3，568M，占显存小）
+cd /data/collab/training-experience-memory/bge_embedding_server
+MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<卡号B> nohup $PY app.py > server.log 2>&1 &
+
+# 3. 验证
+curl -s http://127.0.0.1:9031/health    # 期望 {"status":"ok"}
+curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
+```
+
+> 卡号提示：8 卡 A800，当前 GPU 0（开发者版式）、GPU 7（开发者 bge）已占用，GPU 1~6 空闲。同事自起服务时 `<卡号>` 选空闲卡即可；同一张卡跑两个进程需各自设 `GPU_MEM_UTIL` 分摊显存（如各 0.4）。
+
+给 profiler 传 `image_path` + `embedding_server`（版式地址）+ `concept_embedding_server`（bge 地址）+ `index_path` 即走完整视觉路；不传则纯字段版（零依赖）。
 
 ## 文档
 
