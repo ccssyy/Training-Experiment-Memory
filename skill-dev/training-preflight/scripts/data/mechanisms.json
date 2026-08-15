@@ -1,0 +1,97 @@
+[
+  {
+    "mechanism_id": "MECH-0001",
+    "name": "行级归组字段分段守恒",
+    "problem_mechanism": "行级归组字段在密集/跨页表格中因分段、边界、对齐处理不当导致漏行、重复 group、相邻列串位",
+    "intervention": "长表分段 + 行级守恒 + 连续重叠 core + 行对齐 + 槽位去重",
+    "structural_preconditions": {
+      "semantic": ["quantity", "parcel"],
+      "cardinality": ["grouped_value", "row_aligned", "cross_page_group"],
+      "value_shape": ["numeric_value"],
+      "layout": ["dense_table", "long_table"],
+      "cross_page": true
+    },
+    "claims": ["CLAIM-0001", "CLAIM-0002"],
+    "cases": ["CASE-0001", "CASE-0002", "CASE-0003"],
+    "status": "active",
+    "confidence": "high",
+    "created_at": "2026-08-15",
+    "updated_at": "2026-08-15"
+  },
+  {
+    "mechanism_id": "MECH-0002",
+    "name": "值成分分离",
+    "problem_mechanism": "数值字段的值中混入单位/币种等成分，导致 exact 匹配或归一化判错",
+    "intervention": "值成分分离——单位/币种从 value 拆出独立建模，保留 bbox",
+    "structural_preconditions": {
+      "semantic": ["size", "weight", "unit", "monetary"],
+      "cardinality": ["single_value", "multi_value"],
+      "value_shape": ["numeric_unit", "currency_amount"],
+      "layout": ["dense_table", "multi_block", "labeled_value"],
+      "cross_page": false
+    },
+    "claims": ["CLAIM-0003", "CLAIM-0005"],
+    "cases": ["CASE-0004", "CASE-0005", "CASE-0007"],
+    "status": "active",
+    "confidence": "high",
+    "created_at": "2026-08-15",
+    "updated_at": "2026-08-15"
+  },
+  {
+    "mechanism_id": "MECH-0003",
+    "name": "低频字段增强",
+    "problem_mechanism": "标识/低频字段因样本少、出现频率低而漏抽",
+    "intervention": "targeted 增强 + 低频字段受控上采样 + 字段配额",
+    "structural_preconditions": {
+      "semantic": ["identifier", "parcel"],
+      "cardinality": ["single_value", "multi_value"],
+      "value_shape": ["code_value", "numeric_value"],
+      "layout": ["dense_table"],
+      "cross_page": false
+    },
+    "claims": ["CLAIM-0007"],
+    "cases": ["CASE-0009", "CASE-0012"],
+    "status": "active",
+    "confidence": "medium",
+    "created_at": "2026-08-15",
+    "updated_at": "2026-08-15"
+  },
+  {
+    "mechanism_id": "MECH-0004",
+    "name": "字段互斥排他",
+    "problem_mechanism": "多个字段复用同一值/同 bbox，或无值字段错误输出 0/错误值",
+    "intervention": "字段级排他/互斥约束 + 值唯一性检查 + 存在性字段无值不出 key",
+    "structural_preconditions": {
+      "semantic": ["bank", "identifier", "party", "term", "status"],
+      "cardinality": ["single_value", "multi_value"],
+      "value_shape": ["code_value", "numeric_value", "short_text"],
+      "layout": ["multi_block"],
+      "cross_page": false
+    },
+    "claims": ["CLAIM-0010", "CLAIM-0011"],
+    "cases": ["CASE-0013", "CASE-0014", "CASE-0018"],
+    "status": "active",
+    "confidence": "medium",
+    "created_at": "2026-08-15",
+    "updated_at": "2026-08-15"
+  },
+  {
+    "mechanism_id": "MECH-0005",
+    "name": "当事人定位",
+    "problem_mechanism": "当事人字段（buyer/seller）漏抽、混淆、或集中在页眉/letterhead 区域",
+    "intervention": "引导词定位 + 互斥去重 + 版式/公司频次约束",
+    "structural_preconditions": {
+      "semantic": ["party"],
+      "cardinality": ["single_value", "multi_value"],
+      "value_shape": ["short_text"],
+      "layout": ["multi_block", "labeled_value"],
+      "cross_page": false
+    },
+    "claims": ["CLAIM-0012", "CLAIM-0016"],
+    "cases": ["CASE-0015", "CASE-0016", "CASE-0022"],
+    "status": "active",
+    "confidence": "medium",
+    "created_at": "2026-08-15",
+    "updated_at": "2026-08-15"
+  }
+]

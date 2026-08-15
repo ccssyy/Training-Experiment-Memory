@@ -16,6 +16,14 @@ def load_claims():
         return json.load(f)
 
 
+def load_mechanisms():
+    path = os.path.join(DATA, "mechanisms.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
 def _overlap(a, b):
     return len(set(a) & set(b))
 
@@ -88,6 +96,26 @@ def _cond_match(cond, profile, task_shape):
     return True
 
 
+def _match_mechanism(mechanism, profile):
+    """机制的结构前提匹配（AND，画像缺维度宽松通过）。
+
+    structural_preconditions 只含稳定属性（semantic/cardinality/value_shape/layout/cross_page），
+    不含易变字段类型——机制层命中不看 lane/doc_types。
+    """
+    sp = mechanism.get("structural_preconditions") or {}
+    for dim, prof_key in (("semantic", "semantic_tags"), ("cardinality", "cardinalities"),
+                          ("value_shape", "value_shapes"), ("layout", "layout_tags")):
+        if sp.get(dim):
+            p_vals = set(profile.get(prof_key) or [])
+            if p_vals and not (p_vals & set(sp[dim])):
+                return False
+    if sp.get("cross_page") is not None:
+        p_cross = (profile.get("task_shape") or {}).get("cross_page")
+        if p_cross is not None and p_cross != sp["cross_page"]:
+            return False
+    return True
+
+
 def score_claim(claim, profile):
     """规则打分。返回 (score, matched_tags)。
 
@@ -155,10 +183,21 @@ def _effective_profile(profile):
     return p
 
 
-def retrieve(profile, top_k=5):
-    """返回 top-k Claim 列表，含分数、匹配标签、transfer_level。"""
+def retrieve_with_mechanism(profile, top_k=5):
+    """检索 + 机制层。返回 (results, mechanism_fallbacks)。
+
+    results：现有格式，外加 mechanism_id/mechanism_name 字段。
+    mechanism_fallbacks：命中机制（结构属性）但无匹配 Claim 实例的机制（③b 兜底：推荐机制+提示）。
+    """
     profile = _effective_profile(profile)
     claims = load_claims()
+    mechanisms = load_mechanisms()
+    mech_by_id = {m["mechanism_id"]: m for m in mechanisms}
+
+    # ① 命中机制（结构属性，不看字段类型）
+    matched_mechs = [m for m in mechanisms if _match_mechanism(m, profile)]
+
+    # ② 定位 Claim 实例（现有逻辑，加机制信息）
     results = []
     for c in claims:
         if _value_shape_filter(c, profile):
@@ -171,8 +210,11 @@ def retrieve(profile, top_k=5):
             continue
         if contra_hits:
             score = max(0.0, score - 0.5)  # 命中失效边界 → 显著降权
+        mid = c.get("mechanism_id")
         results.append({
             "claim_id": c["claim_id"],
+            "mechanism_id": mid,
+            "mechanism_name": mech_by_id[mid]["name"] if mid in mech_by_id else None,
             "status": c["status"],
             "score": round(score, 4),
             "matched_tags": matched,
@@ -187,7 +229,18 @@ def retrieve(profile, top_k=5):
             "supported_by": c["supported_by"],
         })
     results.sort(key=lambda r: -r["score"])
-    return results[:top_k]
+
+    # ③b 兜底：命中机制但无匹配实例
+    hit_mech_ids = {r["mechanism_id"] for r in results if r.get("mechanism_id")}
+    fallbacks = [m for m in matched_mechs if m["mechanism_id"] not in hit_mech_ids]
+
+    return results[:top_k], fallbacks
+
+
+def retrieve(profile, top_k=5):
+    """返回 top-k Claim 列表，含分数、匹配标签、transfer_level（向后兼容）。"""
+    results, _ = retrieve_with_mechanism(profile, top_k)
+    return results
 
 
 if __name__ == "__main__":

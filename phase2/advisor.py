@@ -21,7 +21,7 @@ def load_cases():
         return json.load(f)
 
 
-def render_card(profile, ranked):
+def render_card(profile, ranked, mechanism_fallbacks=None):
     """把画像 + top-k Claim 渲染成 Markdown 建议卡。"""
     cases = {c["case_id"]: c for c in load_cases()}
     lines = []
@@ -52,13 +52,22 @@ def render_card(profile, ranked):
     lines.append("")
 
     if not ranked:
-        lines.append("## 无匹配经验\n")
-        lines.append("> 回退默认 SOP（通用抽取规范）+ 人工确认字段语义。\n")
+        if mechanism_fallbacks:
+            lines.append("## 命中机制（无当前字段类型实例）\n")
+            for m in mechanism_fallbacks:
+                claims_str = ", ".join(m["claims"])
+                lines.append(f"- **{m['name']}**：{m['intervention']}（已在 {claims_str} 验证，当前字段类型无验证实例，谨慎采用）")
+            lines.append("")
+        else:
+            lines.append("## 无匹配经验\n")
+            lines.append("> 回退默认 SOP（通用抽取规范）+ 人工确认字段语义。\n")
         return "\n".join(lines)
 
     lines.append("## 候选策略\n")
     for i, r in enumerate(ranked, 1):
         lines.append(f"### {i}. {r['claim_id']}（{r['status']}，迁移层级 {r['transfer_level']}）\n")
+        if r.get("mechanism_name"):
+            lines.append(f"- **归属机制**：{r['mechanism_name']}")
         lines.append(f"- **问题模式**：{r['problem_pattern']}")
         lines.append(f"- **建议干预**：{r['intervention_strategy']}")
         lines.append(f"- **命中标签**：语义 {r['matched_tags']['semantic'] or '—'} / 版式 {r['matched_tags']['layout'] or '—'}")
@@ -72,6 +81,13 @@ def render_card(profile, ranked):
         lines.append(f"- **支撑证据**：{'; '.join(ev) or '—'}")
         lines.append("")
 
+    if mechanism_fallbacks:
+        lines.append("## 命中机制（无当前字段类型实例）\n")
+        for m in mechanism_fallbacks:
+            claims_str = ", ".join(m["claims"])
+            lines.append(f"- **{m['name']}**：{m['intervention']}（已在 {claims_str} 验证，当前字段类型无验证实例，谨慎采用）")
+        lines.append("")
+
     lines.append("## 保护条件与回归提示\n")
     lines.append("- 以上均为建议，不自动改参数；人工接受后进入 plan。")
     lines.append("- 应用前核对：字段面对齐、评估口径、值形态是否与经验一致。")
@@ -79,9 +95,9 @@ def render_card(profile, ranked):
 
 
 def advise(profile, top_k=5):
-    from retriever import retrieve
-    ranked = retrieve(profile, top_k=top_k)
-    return render_card(profile, ranked)
+    from retriever import retrieve_with_mechanism
+    ranked, fallbacks = retrieve_with_mechanism(profile, top_k=top_k)
+    return render_card(profile, ranked, fallbacks)
 
 
 if __name__ == "__main__":

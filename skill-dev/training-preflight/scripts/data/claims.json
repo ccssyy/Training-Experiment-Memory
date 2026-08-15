@@ -1,6 +1,7 @@
 [
   {
     "claim_id": "CLAIM-0001",
+    "mechanism_id": "MECH-0001",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -61,6 +62,7 @@
   },
   {
     "claim_id": "CLAIM-0002",
+    "mechanism_id": "MECH-0001",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -117,6 +119,7 @@
   },
   {
     "claim_id": "CLAIM-0003",
+    "mechanism_id": "MECH-0002",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -216,6 +219,7 @@
   },
   {
     "claim_id": "CLAIM-0005",
+    "mechanism_id": "MECH-0002",
     "status": "validated",
     "capability_tags": {
       "semantic": [
@@ -311,6 +315,7 @@
   },
   {
     "claim_id": "CLAIM-0007",
+    "mechanism_id": "MECH-0003",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -441,6 +446,7 @@
   },
   {
     "claim_id": "CLAIM-0010",
+    "mechanism_id": "MECH-0004",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -497,6 +503,7 @@
   },
   {
     "claim_id": "CLAIM-0011",
+    "mechanism_id": "MECH-0004",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -550,6 +557,7 @@
   },
   {
     "claim_id": "CLAIM-0012",
+    "mechanism_id": "MECH-0005",
     "status": "candidate",
     "capability_tags": {
       "semantic": [
@@ -719,6 +727,7 @@
   },
   {
     "claim_id": "CLAIM-0016",
+    "mechanism_id": "MECH-0005",
     "status": "candidate",
     "capability_tags": {
       "semantic": [

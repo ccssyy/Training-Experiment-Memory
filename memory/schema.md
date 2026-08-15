@@ -8,12 +8,14 @@
 ```
 EvidenceEvent（训练事实：badcase 结论 + 指标 + 评估，追加式不可变）
   └─ ExperienceCase（案例：单次观察，绑证据，不可变）
-       多案例聚合 ──► PatternClaim（通用模式：可检索、可迁移，有状态机）
+       多案例聚合 ──► PatternClaim（实例：机制在某字段类型下的适用，有状态机）
+                       多实例归纳 ──► Mechanism（机制：跨字段类型稳定，有结构前提）
                        通用能力标签（检索键，开放演化）
 ```
 
-- **检索/推荐用 PatternClaim**（跨单据通用）；**追溯用 ExperienceCase**（回到具体 run）；**回灌用 EvidenceEvent**（训练后追加事实）。
+- **检索/推荐用 PatternClaim**（实例，跨单据通用）+ **Mechanism**（机制，跨字段类型统一）；**追溯用 ExperienceCase**（回到具体 run）；**回灌用 EvidenceEvent**（训练后追加事实）。
 - 单次实验结果 ≠ 通用规律：只有多 Case 聚合、且明确失效边界，才升级为可迁移 Claim。
+- 多 Claim 归纳为 Mechanism（跨字段类型的稳定方案）；机制层只基于稳定结构属性（基数/值形态/版式/跨页），**不碰易变的字段类型划分**（lane/标注范围）。
 - EvidenceEvent 是回灌闭环的入口：训练后先追加 EvidenceEvent，再关联/创建 Case、生成 candidate Claim。
 
 **字段类型图例**（每个字段注释尾标注）：
@@ -86,6 +88,7 @@ provenance*: {source_revisions, decision_ref, created_at}  # 对象（source_rev
 
 ```yaml
 claim_id*: CLAIM-0001                                # 单值
+mechanism_id: MECH-0001                              # 单值（可选；归属机制，未归纳时 null）
 status*: candidate | confirmed | validated | rejected | unresolved | superseded  # 单值（枚举）
 capability_tags*:                                   # 对象（4 个子键，均列表）——字段语义维度
   semantic: [quantity, monetary, weight]
@@ -131,7 +134,35 @@ outcome_aggregate: {typical_delta, cost_range, stability}  # 对象（typical_de
 - `applicability.when` 判定为 AND（全满足才推荐）；`contraindications[].when` 判定为 OR（命中任一即降权/过滤）。画像缺失某维度时该维度不参与判定（宽松通过），不因缺数据误拒。
 - 迁移层级：`direct`（结构/bbox/版式/评估基本一致）> `structural`（结构一致版式差异）> `mechanism`（字段不同机制相同）> `context`（仅业务上下文相似，**不生成训练动作**）。
 
-## 4. 状态机
+## 4. Mechanism（机制侧）
+
+多条 Claim 归纳出的**跨字段类型**稳定方案。字段（`*` = 必填）：
+
+```yaml
+mechanism_id*: MECH-0001                           # 单值
+name*: 行级归组字段漏行                             # 单值（机制名，人读）
+problem_mechanism*: 行级归组字段在密集跨页表格因分段/边界处理不当漏行  # 单值（问题机制，稳定本质，不含字段类型）
+intervention*: 长表分段 + 行级守恒 + 连续重叠 core  # 单值（统一干预方案，跨字段类型通用）
+structural_preconditions*:                        # 对象（稳定结构前提，只含稳定属性）
+  cardinality: [grouped_value]                    # 列表（基数）
+  value_shape: []                                 # 列表（值形态，空=不限）
+  layout: [dense_table, long_table]               # 列表（版式结构）
+  cross_page: true                                # 单值（是否跨页）
+claims*: [CLAIM-0001, CLAIM-0002]                 # 列表（机制的各字段类型实例，引用，≥1）
+cases*: [CASE-0001, CASE-0002, ...]               # 列表（归纳证据，引用，≥1）
+status: active | merged | superseded | deprecated # 单值（枚举）
+confidence: high | medium | low                   # 单值（枚举，归纳置信度）
+created_at: 2026-08-15                            # 单值
+updated_at: 2026-08-15                            # 单值
+```
+
+约束：
+- `structural_preconditions` **只含稳定结构属性**（cardinality/value_shape/layout/cross_page），**不含** lane/doc_types/languages 等易变维度——这是机制层与实例层的分水岭，字段类型划分怎么变，机制层都不动。
+- `claims` 挂载机制的各字段类型实例；每个实例（Claim）带易变维度（`when.lane` 等）。
+- `status` 比 Claim 状态机简单：机制是归纳结果，不是待验证干预。`deprecated` 表示被新机制取代（`superseded` 保留旧记录供追溯，`deprecated` 标记已淘汰不再推荐）。
+- 检索先命中 Mechanism（结构属性 AND），再在机制下定位 Claim 实例（lane/doc_types）；命中机制但无匹配实例时，推荐机制 + 标注「当前字段类型无验证实例」。
+
+## 5. 状态机
 
 ```
               ┌─────────────┐
@@ -146,17 +177,21 @@ PatternClaim:
 
   confirmed = 归因/诊断/方法论确认（结论可信，但"干预→改善"未验证）
   validated = 干预验证通过（7 项全过）
+
+Mechanism:
+  active ──► merged ──► superseded（保留旧记录供追溯）
+     └──────► deprecated（被新机制取代，不再推荐）
 ```
 
 每个状态转换 = 一条裁判记录（消费方侧记录，如 ATF 的 Decision Ledger）；memory 核心不引入新事实 owner。
 
-## 5. 通用能力标签与字段语义概念
+## 6. 通用能力标签与字段语义概念
 
 标签与概念都是开放演化的检索键（见 `capability-tags.md`、`field-semantics.md`）。规则：
 - 标签/概念 `validated` 后进正式索引；新标签/新概念为 `candidate`，人工确认 + 积累 Case 后升级。
 - 检索匹配的是**标签/概念**（语义/值形态/基数/版式），不是字段名——字段名千变万化，标签与概念稳定。
 
-### 5.1 字段语义概念状态机
+### 6.1 字段语义概念状态机
 
 ```text
 concept:  candidate ──► validated ──► superseded
@@ -168,7 +203,7 @@ concept:  candidate ──► validated ──► superseded
 - 升级门槛（建议）：`candidate → validated` 需 ≥2 条来自不同单据的 Case 支撑，或 1 条 Case + 人工确认。
 - 上报与审核：消费方上报新字段/新概念，memory 侧人工审核入库（双向，核心不依赖单一消费方）。
 
-### 5.2 未覆盖字段处理链路
+### 6.2 未覆盖字段处理链路
 
 新单据字段在词典中无匹配时的分流（详见 `field-semantics.md` §未覆盖）：
 
