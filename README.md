@@ -32,7 +32,7 @@ echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,
   | python3 phase2/advise.py    # 详见 skill-dev/ 完整 skill 入口
 ```
 
-可选视觉路（用版式向量服务确认单据 + 视觉标签）：在 9031 端口起 qwen3-vl-embedding，在 9033 端口起 bge-m3，调 profiler 时传 `image_path` + `embedding_server` + `index_path`。
+可选视觉路（用版式向量服务确认单据 + 视觉标签）：版式向量走公网 `http://124.220.53.207:9030`（同事的 Qwen3-VL-Embedding-2B），bge-m3 字段语义向量走 9033（各容器自起或 A800），调 profiler 时传 `image_path` + `embedding_server` + `index_path`。
 
 ### 2. 纯 Python 体验（任何机器，无需 GPU）
 

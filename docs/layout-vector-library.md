@@ -93,7 +93,7 @@
 ```
 遍历 8 单据 groups/cluster_XX/
   → 每簇全部图片（大簇均匀抽样到 max_per_cluster）
-  → 调 9031 embedding 服务编码
+  → 调 embedding 服务（公网 9030）编码
   → 写 layout_index.json（每张图一个向量条目）
 ```
 
@@ -102,7 +102,7 @@
 
 ## 8. 与 profiler 的衔接
 
-- `profiler.embed_layout_vector()` 已接入 9031 服务（样例图 → 2048 维向量）。
+- `profiler.embed_layout_vector()` 已接入 embedding 服务（公网 9030，样例图 → 2048 维向量）。
 - 匹配逻辑：由「归簇」改为「对 `layout_index.json` 做 k-NN top-k + 分数」。
 - 不提供样例图时，仍 fallback 到 doc_type 粗推（保持零 GPU 可用）。
 

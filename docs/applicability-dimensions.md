@@ -51,7 +51,7 @@ applicability:
 
 版式维度分两级：
 - **标签级**（零 GPU）：`layout` 标签（dense_table/long_table/…），doc_type 粗推兜底。
-- **向量级**（需 GPU）：新任务样例图 → 调 embedding 服务（9031）→ 2048 维版式向量 → 与历史经验的版式锚比余弦相似度。
+- **向量级**（需 GPU）：新任务样例图 → 调 embedding 服务（公网 9030）→ 2048 维版式向量 → 与历史经验的版式锚比余弦相似度。
 
 接入方式：`profiler` 增加可选 `image_path` + `embedding_server` 参数。提供则走向量级，不提供则回退标签级。**保持零 GPU 的规则画像可用**。
 

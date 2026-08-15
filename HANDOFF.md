@@ -28,7 +28,7 @@
 | 12-phase3-plan | Phase 3 实现切片（回灌闭环框架 Postflight） | 执行计划 |
 | phase2/ | 画像引擎/检索器/建议卡代码 + 机器可读数据 + FINDINGS | 已跑通 |
 | phase3/ | 回灌引擎 curator + EvidenceEvent + 验证门槛 + dry-run | 已跑通 |
-| embedding_server/ | 版式向量服务（Qwen3-VL-Embedding-2B，vLLM pooling，环境变量配置） | 已部署 9031 |
+| embedding_server/ | 版式向量服务代码（Qwen3-VL-Embedding-2B，vLLM pooling，环境变量配置）；开发容器版式服务已停用，版式向量统一走同事公网 `http://124.220.53.207:9030` | 代码保留 |
 | bge_embedding_server/ | 字段语义向量服务（bge-m3，transformers + CLS pooling，环境变量配置） | 已部署 9033 |
 | layout_library/ | 版式向量索引构建/查询脚本（全量向量 + k-NN 软匹配；索引本体 2145 向量存 A800 + 本地 .workbuddy，不进 git） | 已跑通 |
 | phase2/build_concept_index.py + concept_index.json | bge-m3 字段语义概念索引（85 概念 × 名/中文名/别名共 431 片段；索引存 .workbuddy/，不进 git；profiler 别名表未命中时走向量兜底） | 已跑通 |

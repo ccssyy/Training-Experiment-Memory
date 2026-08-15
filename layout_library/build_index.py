@@ -3,7 +3,7 @@
 
 不做硬聚类、不选代表图、不做 centroid；每张图一个向量条目，匹配侧走 k-NN 软匹配。
 用法：
-    EMBED_URL=http://127.0.0.1:9031/v1/embeddings \
+    EMBED_URL=http://124.220.53.207:9030/v1/embeddings \
     SOURCE_ROOT=/path/to/normalized \
     OUT=layout_index.json \
     MAX_PER_CLUSTER=50 \
@@ -17,7 +17,7 @@ import base64
 import urllib.request
 from pathlib import Path
 
-EMBED_URL = os.environ.get("EMBED_URL", "http://127.0.0.1:9031/v1/embeddings")
+EMBED_URL = os.environ.get("EMBED_URL", "http://124.220.53.207:9030/v1/embeddings")
 SOURCE_ROOT = os.environ.get("SOURCE_ROOT")  # 必填：normalized/<doc>_mixed/groups 的父目录
 OUT = os.environ.get("OUT", "layout_index.json")
 MAX_PER_CLUSTER = int(os.environ.get("MAX_PER_CLUSTER", "50"))

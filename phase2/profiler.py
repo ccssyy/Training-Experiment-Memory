@@ -107,7 +107,7 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
     fields: [{"name": str, "sample": str|None}, ...]
     task_shape: 可选，任务形态定性（{"lane","bbox_required","cross_page","triggers":[...]}），上下文类经验检索用。
     image_path: 可选，样例图路径；提供且 embedding_server 可达时，走版式向量级画像。
-    embedding_server: 可选，版式 embedding 服务地址（如 http://127.0.0.1:9031）。
+    embedding_server: 可选，版式 embedding 服务地址（如 http://124.220.53.207:9030）。
     index_path: 可选，layout_index.json 路径；提供时对版式向量做 k-NN 软匹配，得 layout_matches。
     concept_embedding_server: 可选，字段语义 embedding 服务（bge-m3，如 http://127.0.0.1:9033）。
     concept_index_path: 可选，concept_index.json 路径；别名表未命中时做语义向量兜底匹配。

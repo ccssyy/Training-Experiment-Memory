@@ -48,8 +48,8 @@ cd Training-Experiment-Memory/phase2 && python3 demo.py        # 纯字段版，
 - **纯字段版**（画像→检索→建议卡）只用标准库，任何 mac 的 python3 都能跑，这是核心体验，够用。
 - **视觉版**（可选，需 embedding）：
   - bge-m3（字段语义向量，568M）mac CPU 就能跑，或 HTTP 调 A800 `9033`；
-  - qwen3-vl-embedding（版式视觉，2B）mac CPU 跑不现实，走 HTTP 调 A800 `9031`（需能连 A800 内网/VPN）。
-  - 即：本地跑规则 + 远程调 A800 的 embedding 服务。
+  - qwen3-vl-embedding（版式视觉，2B）走 HTTP 调公网 `http://124.220.53.207:9030`（同事已部署，无需自起）。
+  - 即：本地跑规则 + 远程调 embedding 服务。
 
 ## memory 数据在哪
 
@@ -68,41 +68,33 @@ phase2/data/
 
 模型在公共目录 `/data/LLM_model/`（Qwen3-VL-Embedding-2B、bge-m3）。
 
-**方案一（推荐，最省事）：版式共享 + bge 自起**
+**版式服务（qwen3-vl-embedding）：开发与同事体验共用公网服务**
 
-版式服务已由开发者起好并共享（容器 IP `172.18.0.8`，同 docker 网络可直接访问），你只需自起 bge：
+`http://124.220.53.207:9030`（同事已部署的 Qwen3-VL-Embedding-2B，dim=2048），**无需自起**，直接调。
+
+**bge 服务（字段语义向量）：各容器自起**
 
 ```bash
-# 起 bge-m3（字段语义向量，568M，加载快）
 PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python   # 复用共享 env（含 transformers+fastapi）
 cd /data/collab/training-experience-memory/bge_embedding_server
 MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
 curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
 ```
 
-访问地址：版式 `172.18.0.8:9031`，bge `127.0.0.1:9033`。
+访问地址：版式 `http://124.220.53.207:9030`，bge `http://127.0.0.1:9033`。
 
-**方案二（完全隔离，自起全部服务）**
+**完全隔离自起版式（可选，不想依赖公网时）**
 
 前提：你的容器已挂载 `/data`（`-v /data:/data`）+ GPU 权限（`--gpus all`）。
 
 ```bash
 PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python
-
-# 1. 起版式服务（qwen3-vl-embedding-2b，占一张卡，加载约 75s）
 cd /data/collab/training-experience-memory/embedding_server
-MODEL_PATH=/data/LLM_model/Qwen3-VL-Embedding-2B PORT=9031 GPU_IDS=<卡号A> nohup $PY app.py > server.log 2>&1 &
-
-# 2. 起字段语义服务（bge-m3，568M，占显存小）
-cd /data/collab/training-experience-memory/bge_embedding_server
-MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<卡号B> nohup $PY app.py > server.log 2>&1 &
-
-# 3. 验证
+MODEL_PATH=/data/LLM_model/Qwen3-VL-Embedding-2B PORT=9031 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
 curl -s http://127.0.0.1:9031/health    # 期望 {"status":"ok"}
-curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
 ```
 
-> 卡号提示：8 卡 A800，当前 GPU 0（开发者版式）、GPU 7（开发者 bge）已占用，GPU 1~6 空闲。同事自起服务时 `<卡号>` 选空闲卡即可；同一张卡跑两个进程需各自设 `GPU_MEM_UTIL` 分摊显存（如各 0.4）。
+> 卡号提示：8 卡 A800，当前 GPU 7（开发者 bge）已占用，其余空闲。同事自起 bge/版式时 `<空闲卡号>` 选空闲卡即可；同一张卡跑两个进程需各自设 `GPU_MEM_UTIL` 分摊显存（如各 0.4）。
 
 给 profiler 传 `image_path` + `embedding_server`（版式地址）+ `concept_embedding_server`（bge 地址）+ `index_path` 即走完整视觉路；不传则纯字段版（零依赖）。
 

@@ -46,7 +46,7 @@ echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,
 
 用户提供了**样例图**（图片路径），且环境配置了版式 embedding 服务 + 版式索引时，可对样例图做**版式视觉确认**——识别样例图真实属于哪种单据（纠正 doc_type 标错/拿错样例图），并给出版式结构标签（比 doc_type 名字粗推可靠）。
 
-- JSON 里加 `image_path`（样例图路径）+ `embedding_server`（embedding 服务地址，如 `http://127.0.0.1:9031`）+ `index_path`（`layout_index.json` 路径）；或通过环境变量 `EMBEDDING_SERVER` / `LAYOUT_INDEX` 提供后两者。
+- JSON 里加 `image_path`（样例图路径）+ `embedding_server`（embedding 服务地址，如 `http://124.220.53.207:9030`）+ `index_path`（`layout_index.json` 路径）；或通过环境变量 `EMBEDDING_SERVER` / `LAYOUT_INDEX` 提供后两者。
 - 未配置时脚本自动回退纯字段版，不影响使用。
 
 单据缩写 ↔ 中文名对照（输出建议卡时会展示中文名）：

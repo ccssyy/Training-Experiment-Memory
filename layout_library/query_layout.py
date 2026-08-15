@@ -2,7 +2,7 @@
 """版式软匹配：给一张新图，对 layout_index.json 做 k-NN 余弦相似度检索，不做硬归属。
 
 用法：
-    INDEX=layout_index.json EMBED_URL=http://127.0.0.1:9031/v1/embeddings \
+    INDEX=layout_index.json EMBED_URL=http://124.220.53.207:9030/v1/embeddings \
     python3 query_layout.py --doc pl_mixed --image /path/to/new.png [--top-k 3] [--threshold 0.85]
 """
 import os
@@ -18,7 +18,7 @@ def encode_image(path: str):
         b64 = base64.b64encode(f.read()).decode()
     payload = {"inputs": [{"image_base64": b64}]}
     req = urllib.request.Request(
-        os.environ.get("EMBED_URL", "http://127.0.0.1:9031/v1/embeddings"),
+        os.environ.get("EMBED_URL", "http://124.220.53.207:9030/v1/embeddings"),
         data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json"},
         method="POST",
