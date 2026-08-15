@@ -13,7 +13,7 @@ import urllib.request
 
 EMBED_URL = os.environ.get("EMBED_URL", "http://127.0.0.1:9033/v1/embeddings")
 CONCEPTS = os.environ.get("CONCEPTS", "data/concepts.json")
-OUT = os.environ.get("OUT", "data/concept_index.json")
+OUT = os.environ.get("OUT", "../indexes/concept_index.json")
 BATCH = int(os.environ.get("BATCH", "256"))
 
 

@@ -19,7 +19,7 @@ from pathlib import Path
 
 EMBED_URL = os.environ.get("EMBED_URL", "http://124.220.53.207:9030/v1/embeddings")
 SOURCE_ROOT = os.environ.get("SOURCE_ROOT")  # 必填：normalized/<doc>_mixed/groups 的父目录
-OUT = os.environ.get("OUT", "layout_index.json")
+OUT = os.environ.get("OUT", "../indexes/layout_index.json")
 MAX_PER_CLUSTER = int(os.environ.get("MAX_PER_CLUSTER", "50"))
 DOCS = ["aco_non_goods", "crn_mixed", "dbn_mixed", "do_mixed", "sdn_mixed", "so_mixed", "swb_mixed", "pl_mixed"]
 IMG_EXTS = {".jpg", ".jpeg", ".png"}

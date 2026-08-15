@@ -1,0 +1,3 @@
+# 大向量索引不进 git（用 build_index.py / build_concept_index.py 重建，或从 A800 共享目录获取）
+layout_index.json
+concept_index.json

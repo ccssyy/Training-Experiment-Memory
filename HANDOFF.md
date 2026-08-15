@@ -30,8 +30,8 @@
 | phase3/ | 回灌引擎 curator + EvidenceEvent + 验证门槛 + dry-run | 已跑通 |
 | embedding_server/ | 版式向量服务代码（Qwen3-VL-Embedding-2B，vLLM pooling，环境变量配置）；开发容器版式服务已停用，版式向量统一走同事公网 `http://124.220.53.207:9030` | 代码保留 |
 | bge_embedding_server/ | 字段语义向量服务（bge-m3，transformers + CLS pooling，环境变量配置） | 已部署 9033 |
-| layout_library/ | 版式向量索引构建/查询脚本（全量向量 + k-NN 软匹配；索引本体 2145 向量存 A800 + 本地 .workbuddy，不进 git） | 已跑通 |
-| phase2/build_concept_index.py + concept_index.json | bge-m3 字段语义概念索引（85 概念 × 名/中文名/别名共 431 片段；索引存 .workbuddy/，不进 git；profiler 别名表未命中时走向量兜底） | 已跑通 |
+| layout_library/ | 版式向量索引构建/查询脚本（全量向量 + k-NN 软匹配；索引本体 2145 向量存 `indexes/` + A800，不进 git） | 已跑通 |
+| phase2/build_concept_index.py + indexes/concept_index.json | bge-m3 字段语义概念索引（85 概念 × 名/中文名/别名共 431 片段；索引存 `indexes/`，不进 git；profiler 别名表未命中时走向量兜底） | 已跑通 |
 | docs/layout-vector-library.md | 版式向量库方案（向量索引 + 软匹配，含实测诊断） | 定稿 |
 | docs/applicability-dimensions.md | 结构化适用性判别维度（10 维 + when/contraindications 判定） | 定稿 |
 | docs/architecture-overview.md | 架构设计总览（分层/对象模型/状态机/验证门槛） | 设计总览 |
