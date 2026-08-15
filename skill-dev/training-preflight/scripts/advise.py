@@ -8,6 +8,8 @@
 
 可选版式视觉路：JSON 里加 image_path + embedding_server + index_path（或环境变量
 EMBEDDING_SERVER / LAYOUT_INDEX），会对样例图做版式视觉确认（识别真实单据类型、纠 doc_type 标错）。
+可选字段语义向量路：JSON 里加 concept_embedding_server + concept_index_path（或环境变量
+CONCEPT_EMBEDDING_SERVER / CONCEPT_INDEX），别名表未命中时走 bge-m3 语义兜底。
 不提供则纯字段版自包含，零外部依赖。
 
 输出：Markdown 策略建议卡（画像摘要 + top-k 历史经验 + 失效边界 + 证据）。
@@ -34,6 +36,8 @@ def advise_from_input(inp):
         image_path=inp.get("image_path"),
         embedding_server=inp.get("embedding_server") or os.environ.get("EMBEDDING_SERVER"),
         index_path=inp.get("index_path") or os.environ.get("LAYOUT_INDEX"),
+        concept_embedding_server=inp.get("concept_embedding_server") or os.environ.get("CONCEPT_EMBEDDING_SERVER"),
+        concept_index_path=inp.get("concept_index_path") or os.environ.get("CONCEPT_INDEX"),
     )
     ranked = retrieve(profile, top_k=inp.get("top_k", 5))
     return render_card(profile, ranked)

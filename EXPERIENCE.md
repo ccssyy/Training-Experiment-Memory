@@ -98,6 +98,27 @@ curl -s http://127.0.0.1:9031/health    # 期望 {"status":"ok"}
 
 给 profiler 传 `image_path` + `embedding_server`（版式地址）+ `concept_embedding_server`（bge 地址）+ `index_path` 即走完整视觉路；不传则纯字段版（零依赖）。
 
+**索引文件路径**（体验目录里已预置，不在 git 里，是单独同步的大文件）：
+
+| 索引 | 路径 | 内容 |
+|---|---|---|
+| 版式索引 | `layout_library/layout_index.json` | 8 单据 2145 版式向量（dim 2048） |
+| 概念索引 | `phase2/data/concept_index.json` | 85 概念 431 片段（dim 1024） |
+
+完整视觉版调用示例（skill advise.py 走视觉路）：
+
+```bash
+cd /data/collab/training-experience-memory
+echo '{"doc_type":"aco","image_path":"/path/to/sample.png","fields":[{"name":"beneficiary_account","sample":"IT13..."}]}' \
+  | EMBEDDING_SERVER=http://124.220.53.207:9030 \
+    CONCEPT_EMBEDDING_SERVER=http://127.0.0.1:9033 \
+    LAYOUT_INDEX=/data/collab/training-experience-memory/layout_library/layout_index.json \
+    CONCEPT_INDEX=/data/collab/training-experience-memory/phase2/data/concept_index.json \
+    python3 skill-dev/training-preflight/scripts/advise.py
+```
+
+> 索引若缺失（比如你自己 clone git 到别处），可用 `layout_library/build_index.py`（版式，需公网 9030）+ `phase2/build_concept_index.py`（概念，需 bge 9033）重新构建。
+
 ## 文档
 
 - `README.md` / `HANDOFF.md` — 项目总览 + 交接
