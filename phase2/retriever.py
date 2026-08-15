@@ -42,9 +42,9 @@ def _applicability_check(claim, profile):
     prof_map = {"cardinality": "cardinalities", "value_shape": "value_shapes", "layout": "layout_tags"}
 
     when_ok = True
-    # lane（画像单值 vs when 列表）
+    # lane（画像单值 vs when 列表；用户显式 lane 优先，否则用视觉推断的 lane）
     if when.get("lane"):
-        p_lane = task_shape.get("lane")
+        p_lane = task_shape.get("lane") or profile.get("layout_doc_lane")
         if p_lane and p_lane not in when["lane"]:
             when_ok = False
     # languages（画像列表 vs when 列表）

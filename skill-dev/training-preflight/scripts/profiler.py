@@ -150,6 +150,7 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         "layout_doc_match_cn": doc_cn(layout_doc_match),
         "layout_doc_scope": _doc_scope_of(layout_doc_match),
         "layout_doc_scope_cn": _SCOPE_CN.get(_doc_scope_of(layout_doc_match), ""),
+        "layout_doc_lane": _SCOPE_TO_LANE.get(_doc_scope_of(layout_doc_match)),
         "layout_tags_visual": sorted(layout_tags_visual),
         "layout_doc_conflict": layout_doc_conflict,
         "task_shape": task_shape or {},
@@ -268,6 +269,13 @@ _SCOPE_CN = {
     "mixed": "全字段",
     "goods": "仅货描",
     "non_goods": "仅非货描",
+}
+
+# 标注字段范围后缀 → lane 推断（mixed 全字段不限定 lane）
+_SCOPE_TO_LANE = {
+    "mixed": None,
+    "goods": "goods",
+    "non_goods": "non_goods",
 }
 
 
