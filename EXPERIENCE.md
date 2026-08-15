@@ -23,16 +23,33 @@ echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,
   | python3 skill-dev/training-preflight/scripts/advise.py
 ```
 
-## 用自然语言体验（skill）
+## 用自然语言体验（skill，workbuddy / Claude Code / Codex 通用）
 
-把 skill 目录复制到你的 agent 工具 skills 目录：
+Agent Skills 标准（agentskills.io）三款工具通用，SKILL.md 只需 `name`+`description`，本 skill 直接兼容。装到对应工具的用户级 skills 目录：
 
 ```bash
-cp -r /data/collab/training-experience-memory/skill-dev/training-preflight ~/.workbuddy/skills/   # workbuddy
-# 或 ~/.claude/skills/  （Claude Code）
+# workbuddy
+cp -r /data/collab/training-experience-memory/skill-dev/training-preflight ~/.workbuddy/skills/
+# Claude Code
+cp -r /data/collab/training-experience-memory/skill-dev/training-preflight ~/.claude/skills/
+# Codex CLI（触发：/skills 选，或提示词写 $training-preflight）
+cp -r /data/collab/training-experience-memory/skill-dev/training-preflight ~/.codex/skills/
 ```
 
-然后自然语言描述任务（如「我要训练海运单抽取，字段有提单号、船名、毛重、净重」），agent 会自动触发。
+然后自然语言描述任务（如「我要训练海运单抽取，字段有提单号、船名、毛重、净重」），agent 自动触发 skill 走画像→检索→建议卡。
+
+## 在自己 mac 上体验（无需 A800）
+
+```bash
+git clone https://github.com/[GitHub账号]/Training-Experiment-Memory.git
+cd Training-Experiment-Memory/phase2 && python3 demo.py        # 纯字段版，零 GPU 零依赖
+```
+
+- **纯字段版**（画像→检索→建议卡）只用标准库，任何 mac 的 python3 都能跑，这是核心体验，够用。
+- **视觉版**（可选，需 embedding）：
+  - bge-m3（字段语义向量，568M）mac CPU 就能跑，或 HTTP 调 A800 `9033`；
+  - qwen3-vl-embedding（版式视觉，2B）mac CPU 跑不现实，走 HTTP 调 A800 `9031`（需能连 A800 内网/VPN）。
+  - 即：本地跑规则 + 远程调 A800 的 embedding 服务。
 
 ## memory 数据在哪
 
