@@ -81,9 +81,9 @@
 
 端到端检索已跑通（4 场景：装箱单/aco/未知字段/bbox 任务），暴露 4 个结构问题（详见 `phase2/FINDINGS.md`）：
 - **F3（已修）**：上下文类 Claim（训练稳定性/运行时/评估口径）的 capability_tags 全空无法命中 → schema 给 PatternClaim 加 `task_shape` 任务形态维度。
-- **F2（待修）**：值形态过滤规则矩阵不全（只做 grouped↔single 一条）。
-- **F4（待修）**：值形态启发把 CTN 误判为重量/尺寸单位。
-- **F1（待修）**：版式标签 multi_block 太泛。
+- **F2（已修）**：值形态过滤规则矩阵不全 → 补强类型过滤（currency_amount/date_value/numeric_unit）。
+- **F4（已修）**：值形态启发把 CTN 误判为重量/尺寸单位 → 拆出计数单位（CTN/PCS/BAG）。
+- **F1（已修）**：版式标签 multi_block 太泛 → 版式向量（qwen3-vl）+ glm-vision 实测标签。
 
 ## 下一步：Phase 1（整理历史 → ExperienceCase/PatternClaim）
 

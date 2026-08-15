@@ -23,7 +23,7 @@
 
 **结构含义**：`multi_block` 标签区分度太低，Phase 1 全量整理时版式标签需更精细（或把 multi_block 拆成更具体的子类）。
 
-## F2 值形态过滤规则未真正生效
+## F2 值形态过滤规则未真正生效（已修 2026-08-15）
 
 **现象**：`_value_shape_filter` 只做"grouped_value 经验不推荐给 single_value"一条，但 demo 里所有 claim 的 cardinality 都含 grouped_value 或场景都是 grouped，未触发过滤。
 
@@ -41,7 +41,7 @@
 
 **结构含义（重要）**：schema 需要给 PatternClaim 增加一个**任务形态维度**（如 `task_shape: {lane, bbox_required, cross_page, training_config, eval_contract}`），让上下文类经验也能被检索。否则这 4 条 validated Claim 是"死数据"。
 
-## F4 值形态启发规则粗糙（CTN 误判为重量/尺寸）
+## F4 值形态启发规则粗糙（CTN 误判为重量/尺寸，已修 2026-08-15）
 
 **现象**：`10 CTN` 的值形态启发误判为 numeric_unit + weight/size，但 CTN 是"箱数"单位，应归 quantity/parcel。
 
