@@ -17,6 +17,52 @@ def load_concepts():
         return json.load(f)
 
 
+_concept_index_cache = None
+_concept_index_cache_path = None
+
+
+def load_concept_index(index_path):
+    """加载 concept_index.json（进程内缓存，避免每次匹配重复解析）。返回 entries 列表。"""
+    global _concept_index_cache, _concept_index_cache_path
+    if _concept_index_cache is None or _concept_index_cache_path != index_path:
+        with open(index_path, encoding="utf-8") as f:
+            _concept_index_cache = json.load(f).get("entries", [])
+        _concept_index_cache_path = index_path
+    return _concept_index_cache
+
+
+def _embed_text(text, server_url, timeout=30):
+    """调 bge-m3 服务编码单个文本，返回向量（失败返回 None）。"""
+    import urllib.request
+    try:
+        payload = json.dumps({"inputs": [{"text": text}]}).encode("utf-8")
+        req = urllib.request.Request(
+            f"{server_url.rstrip('/')}/v1/embeddings",
+            data=payload,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        resp = json.loads(urllib.request.urlopen(req, timeout=timeout).read())
+        return resp["data"][0]["embedding"]
+    except Exception:
+        return None
+
+
+def match_concept_by_vector(field_name, server_url, entries, top_k=1, threshold=0.68):
+    """字段名 → bge-m3 向量 → 概念索引 k-NN。返回 (concept, score) 或 None。"""
+    vec = _embed_text(field_name, server_url)
+    if vec is None:
+        return None
+    best = None
+    for e in entries:
+        s = _cosine(vec, e["vector"])
+        if best is None or s > best[1]:
+            best = (e["concept"], s)
+    if best and best[1] >= threshold:
+        return best
+    return None
+
+
 def _norm(name):
     """字段名归一化：小写、去下划线/连字符，用于别名匹配。"""
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
@@ -51,7 +97,8 @@ def value_shape_heuristic(sample):
     return "short_text", []
 
 
-def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embedding_server=None, index_path=None):
+def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embedding_server=None,
+                   index_path=None, concept_embedding_server=None, concept_index_path=None):
     """字段列表 → 画像。
 
     fields: [{"name": str, "sample": str|None}, ...]
@@ -59,6 +106,8 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
     image_path: 可选，样例图路径；提供且 embedding_server 可达时，走版式向量级画像。
     embedding_server: 可选，版式 embedding 服务地址（如 http://127.0.0.1:9031）。
     index_path: 可选，layout_index.json 路径；提供时对版式向量做 k-NN 软匹配，得 layout_matches。
+    concept_embedding_server: 可选，字段语义 embedding 服务（bge-m3，如 http://127.0.0.1:9033）。
+    concept_index_path: 可选，concept_index.json 路径；别名表未命中时做语义向量兜底匹配。
     返回 dict：字段级映射 + 聚合标签集合（含可选 layout_vector / layout_matches）。
     """
     concepts = load_concepts()
@@ -66,6 +115,10 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
     for c in concepts:
         for a in c["aliases"]:
             alias_index.setdefault(_norm(a), c["c"])
+
+    # 语义向量兜底：别名表未命中时，字段名 → bge-m3 → 概念索引 k-NN
+    _concept_vec = concept_embedding_server and concept_index_path
+    _concept_entries = None
 
     semantic_tags, value_shapes, cardinalities = set(), set(), set()
     field_profile = []
@@ -76,6 +129,15 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         norm = _norm(name)
         concept = alias_index.get(norm)
         matched_by = "alias" if concept else "none"
+
+        # 别名表未命中 → 语义向量兜底（第三路）
+        if concept is None and _concept_vec:
+            if _concept_entries is None:
+                _concept_entries = load_concept_index(concept_index_path)
+            vhit = match_concept_by_vector(name, concept_embedding_server, _concept_entries)
+            if vhit:
+                concept = vhit[0]
+                matched_by = "vector"
 
         vs, extra_sem = value_shape_heuristic(sample)
         sem = set()
