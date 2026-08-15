@@ -29,12 +29,26 @@ def _overlap(a, b):
 
 
 def _value_shape_filter(claim, profile):
-    """值形态过滤：claim 只讲 grouped_value 经验，而画像字段全是 single_value → 过滤。"""
+    """值形态/基数过滤矩阵：claim 的强约束在画像中不满足 → 过滤。
+
+    规则（保守，只过滤明确不兼容的）：
+    1. 基数：claim 需要 grouped_value（行级归组经验），画像无 grouped_value 字段 → 过滤。
+    2. 值形态强类型：claim 的 value_shape 全是强类型（currency_amount/date_value/numeric_unit），
+       画像字段无对应值形态 → 过滤（如金额经验不适用无金额字段的任务）。
+    """
     claim_card = claim["capability_tags"].get("cardinality", [])
     profile_card = set(profile.get("cardinalities", []))
-    # claim 需要 grouped，但画像没有 grouped 字段 → 不适用
+    # 1. 基数：grouped_value 经验不推荐给无 grouped_value 字段的画像
     if "grouped_value" in claim_card and "grouped_value" not in profile_card:
-        return True  # 过滤
+        return True
+
+    # 2. 值形态强类型：金额/日期/带单位数值经验，画像无对应值形态 → 过滤
+    claim_vs = claim["capability_tags"].get("value_shape", [])
+    profile_vs = set(profile.get("value_shapes", []))
+    strong_types = {"currency_amount", "date_value", "numeric_unit"}
+    if claim_vs and set(claim_vs) <= strong_types and not (set(claim_vs) & profile_vs):
+        return True
+
     return False
 
 

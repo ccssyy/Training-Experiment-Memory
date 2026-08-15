@@ -82,9 +82,12 @@ def value_shape_heuristic(sample):
     # 日期：形如 2026-03-25 / 25 MAR 2026
     if re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s) or re.search(r"\d{1,2}\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s*\d{4}", s, re.I):
         return "date_value", ["temporal"]
-    # 数值+单位（重量/尺寸）
-    if re.search(r"\d+(\.\d+)?\s*(KG|KGS|LB|LBS|MT|G|CTN|CBM|M3|PCS|CM|MM)\b", s, re.I):
+    # 数值+重量/尺寸单位
+    if re.search(r"\d+(\.\d+)?\s*(KG|KGS|LB|LBS|MT|CBM|M3|CM|MM)\b", s, re.I):
         return "numeric_unit", ["weight", "size"]
+    # 数值+计数单位（箱/件/包，计数非重量尺寸）
+    if re.search(r"\d+(\.\d+)?\s*(CTN|CTNS|PCS|CARTON|BAG|BAGS|PKG|PKGS|SET|SETS|UNIT|UNITS|EA)\b", s, re.I):
+        return "numeric_value", ["quantity"]
     # 纯数值
     if re.fullmatch(r"[\d,\.\s]+", s):
         return "numeric_value", ["quantity"]
