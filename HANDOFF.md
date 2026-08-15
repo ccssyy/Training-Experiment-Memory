@@ -29,7 +29,9 @@
 | phase2/ | 画像引擎/检索器/建议卡代码 + 机器可读数据 + FINDINGS | 已跑通 |
 | phase3/ | 回灌引擎 curator + EvidenceEvent + 验证门槛 + dry-run | 已跑通 |
 | embedding_server/ | 版式向量服务（Qwen3-VL-Embedding-2B，vLLM pooling，环境变量配置） | 已部署 9031 |
+| bge_embedding_server/ | 字段语义向量服务（bge-m3，transformers + CLS pooling，环境变量配置） | 已部署 9033 |
 | layout_library/ | 版式向量索引构建/查询脚本（全量向量 + k-NN 软匹配；索引本体 2145 向量存 A800 + 本地 .workbuddy，不进 git） | 已跑通 |
+| phase2/build_concept_index.py + concept_index.json | bge-m3 字段语义概念索引（85 概念 × 名/中文名/别名共 431 片段；索引存 .workbuddy/，不进 git；profiler 别名表未命中时走向量兜底） | 已跑通 |
 | docs/layout-vector-library.md | 版式向量库方案（向量索引 + 软匹配，含实测诊断） | 定稿 |
 | docs/applicability-dimensions.md | 结构化适用性判别维度（10 维 + when/contraindications 判定） | 定稿 |
 | docs/architecture-overview.md | 架构设计总览（分层/对象模型/状态机/验证门槛） | 设计总览 |
@@ -45,8 +47,8 @@
 1. **框架主体**：用同事的 Preflight（Case/Claim 两层 + 通用能力标签 + 能力矩阵 + 状态机）。
 2. **保留我们的**：向量分析（字段语义 bge-m3 + 版式视觉 CLIP/DINOv2）+ 独立化架构 + ATF 接入层。
 3. **对象模型**：experience-card 拆为 `ExperienceCase`（证据侧）+ `PatternClaim`（模式侧，通用能力标签，引用 case 集合）。检索用 Claim、追溯用 Case。
-4. **字段语义匹配**：三路全纳入首轮（别名表 + 值形态启发 + 语义向量 bge-m3 阈值 0.75）。
-5. **版式相似度**：双路（布局结构规则 0.6 + 页面视觉向量 0.4）。
+4. **字段语义匹配**：三路全纳入首轮（别名表 + 值形态启发 + 语义向量 bge-m3 阈值 0.68，向量兜底别名表未命中的字段名变体）。
+5. **版式相似度**：视觉向量（qwen3-vl-embedding-2b）对每张图编 2048 维版式结构向量，跨单据级确认；簇级精细匹配不实（并查集簇粒度不均），改为"全量向量 + k-NN 软匹配"方案，索引存 .workbuddy/。
 6. **数据支持四维**：support / coverage / exposure / diversity。
 7. **迁移层级**：direct / structural / mechanism / context。
 8. **策略状态**：candidate / confirmed / validated / rejected / unresolved / superseded（confirmed=归因/诊断确认，validated=干预验证通过）。

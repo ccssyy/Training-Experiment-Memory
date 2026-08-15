@@ -109,4 +109,17 @@ active ──► merged ──► superseded（保留旧记录）
 | Phase 1 | 记忆数据（32 Case + 26 Claim + 5 Mechanism + 85 概念 + 标签） | ✅ |
 | Phase 2 | 训练前推荐（画像 + 机制/规则检索 + 建议卡 + 版式视觉确认） | ✅ MVP |
 | Phase 3 | 训练后回灌（EvidenceEvent + 验证门槛 + curator） | ✅ 框架 + dry-run |
-| 待做 | 向量检索（bge-m3/CLIP）、ATF 接入、真实训练验证 | P4 / 后续 |
+| 向量检索 P4 | 字段语义向量 bge-m3 + 概念索引 + 别名未命中兜底 | ✅ 已闭环 |
+| F1~F4 结构反馈 | 版式标签 / 值形态过滤 / 上下文类 / CTN 单位 | ✅ 全部闭环 |
+| 待做 | ATF 接入 / 真实训练验证 | 后续 |
+
+## 9. 架构图（含 PNG 导出）
+
+| 图 | HTML（自包含浏览器） | PNG 导出 |
+|---|---|---|
+| 系统架构 | `diagrams/system-architecture.html` | `diagrams/system-architecture.png` |
+| 完整闭环 | `diagrams/feedback-loop.html` | `diagrams/feedback-loop.png` |
+| 对象模型（含 Mechanism） | `diagrams/object-model.html` | `diagrams/object-model.png` |
+| 状态机 | `diagrams/claim-lifecycle.html` | `diagrams/claim-lifecycle.png` |
+
+PNG 用 Chrome headless 截图生成（参数：--headless=new --disable-crashpad --no-sandbox --run-all-compositor-stages-before-draw），1400×1000。
