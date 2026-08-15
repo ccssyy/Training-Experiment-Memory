@@ -125,8 +125,8 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
             cross = match_layout_cross(layout_vector, index_path, top_k=1, threshold=0.6)
             if cross:
                 layout_doc_match = cross[0]["doc"]
-                vis_doc_type = _INDEX_TO_DOC_TYPE.get(layout_doc_match, layout_doc_match)
-                layout_tags_visual = _infer_layout(vis_doc_type)
+                # 实测版式标签（glm-vision 核过），兜底回 _infer_layout 规则
+                layout_tags_visual = _INDEX_DOC_LAYOUT.get(layout_doc_match, _infer_layout(doc_type))
                 # 冲突：声明的 doc_type 与样例图视觉单据不一致（可能标错/拿错样例图）
                 try:
                     index = load_layout_index(index_path)
@@ -146,6 +146,7 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
         "layout_matches": layout_matches,
         "layout_matched": bool(layout_matches),
         "layout_doc_match": layout_doc_match,
+        "layout_doc_match_cn": doc_cn(layout_doc_match),
         "layout_tags_visual": sorted(layout_tags_visual),
         "layout_doc_conflict": layout_doc_conflict,
         "task_shape": task_shape or {},
@@ -247,16 +248,40 @@ def match_layout(layout_vector, doc_type, index_path, top_k=3, threshold=0.75):
     return scored[:top_k]
 
 
-# index 单据 key → 语义 doc_type（供 _infer_layout 复用，视觉确认单据后推版式标签）
-_INDEX_TO_DOC_TYPE = {
-    "pl_mixed": "packing_list",
-    "so_mixed": "sales_order",
-    "do_mixed": "delivery_order",
-    "crn_mixed": "credit_note",
-    "dbn_mixed": "debit_note",
-    "aco_non_goods": "collection_order",
-    "sdn_mixed": "delivery_note",
-    "swb_mixed": "sea_waybill",
+# index 单据 key → 中文名（展示用）
+_INDEX_DOC_CN = {
+    "pl_mixed": "装箱单",
+    "swb_mixed": "海运单",
+    "aco_non_goods": "托收",
+    "crn_mixed": "贷记通知",
+    "dbn_mixed": "借记通知",
+    "do_mixed": "提货单",
+    "sdn_mixed": "发货单",
+    "so_mixed": "销售订单",
+}
+
+
+def doc_cn(doc):
+    """单据 key/缩写 → 中文名（含带 _mixed/_non_goods 后缀的 index key 归一化）。"""
+    if not doc:
+        return ""
+    if doc in _INDEX_DOC_CN:
+        return _INDEX_DOC_CN[doc]
+    # 归一化：pl_mixed -> pl；aco_non_goods -> aco
+    stem = doc.split("_")[0]
+    return _INDEX_DOC_CN.get(stem, doc)
+
+
+# index 单据 key → 版式结构标签（glm-vision 核 8 单据 cluster_00 代表图所得，2026-08-15）
+_INDEX_DOC_LAYOUT = {
+    "pl_mixed": ["dense_table"],
+    "swb_mixed": ["multi_block", "cross_page"],
+    "aco_non_goods": ["dense_table"],
+    "crn_mixed": ["multi_block"],
+    "dbn_mixed": ["dense_table"],
+    "do_mixed": ["dense_table"],
+    "sdn_mixed": ["long_table"],
+    "so_mixed": ["long_table", "cross_page"],
 }
 
 

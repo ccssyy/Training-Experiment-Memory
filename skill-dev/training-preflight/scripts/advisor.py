@@ -33,11 +33,13 @@ def render_card(profile, ranked):
     vis_layout = profile.get('layout_tags_visual') or profile.get('layout_tags') or []
     lines.append(f"- 版式标签：{', '.join(vis_layout) or '无'}")
     if profile.get("layout_doc_match"):
-        lines.append(f"- 版式视觉确认：{profile['layout_doc_match']}（样例图最像该单据）")
+        cn = profile.get("layout_doc_match_cn") or profile["layout_doc_match"]
+        lines.append(f"- 版式视觉确认：{profile['layout_doc_match']}（{cn}，样例图最像该单据）")
     if profile.get("layout_doc_conflict"):
+        cn = profile.get("layout_doc_match_cn") or profile.get("layout_doc_match")
         lines.append(
             f"- 警告：声明的单据类型（{profile.get('doc_type')}）与样例图版式不一致，"
-            f"视觉判定更像 {profile.get('layout_doc_match')}，请核对是否标错或拿错样例图"
+            f"视觉判定更像 {cn}（{profile.get('layout_doc_match')}），请核对是否标错或拿错样例图"
         )
     if profile.get("unmatched_fields"):
         lines.append(f"- 未匹配字段（需人工确认语义）：{', '.join(profile['unmatched_fields'])}")

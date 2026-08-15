@@ -6,6 +6,10 @@
   1. echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,392 BAGS"}]}' | python3 advise.py
   2. python3 advise.py '{"doc_type":"packing_list","fields":[...]}'
 
+可选版式视觉路：JSON 里加 image_path + embedding_server + index_path（或环境变量
+EMBEDDING_SERVER / LAYOUT_INDEX），会对样例图做版式视觉确认（识别真实单据类型、纠 doc_type 标错）。
+不提供则纯字段版自包含，零外部依赖。
+
 输出：Markdown 策略建议卡（画像摘要 + top-k 历史经验 + 失效边界 + 证据）。
 """
 import json
@@ -22,7 +26,15 @@ from advisor import render_card
 def advise_from_input(inp):
     doc_type = inp.get("doc_type")
     fields = inp.get("fields", [])
-    profile = profile_fields(fields, doc_type=doc_type, task_shape=inp.get("task_shape"))
+    # 版式视觉路（可选增强）：需提供样例图 + embedding 服务 + 版式索引，否则纯字段版自包含
+    profile = profile_fields(
+        fields,
+        doc_type=doc_type,
+        task_shape=inp.get("task_shape"),
+        image_path=inp.get("image_path"),
+        embedding_server=inp.get("embedding_server") or os.environ.get("EMBEDDING_SERVER"),
+        index_path=inp.get("index_path") or os.environ.get("LAYOUT_INDEX"),
+    )
     ranked = retrieve(profile, top_k=inp.get("top_k", 5))
     return render_card(profile, ranked)
 
