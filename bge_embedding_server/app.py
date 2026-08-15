@@ -2,7 +2,7 @@
 
 FastAPI + transformers，提供纯文本 dense embedding（[CLS] pooling + L2 归一化）。
 用法：
-    MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=1 python app.py
+    MODEL_PATH=/path/to/bge-m3 PORT=9033 GPU_IDS=1 python app.py
 """
 import logging
 from contextlib import asynccontextmanager
