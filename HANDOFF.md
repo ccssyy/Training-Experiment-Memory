@@ -63,7 +63,7 @@
 - 字段语义词典 v2（三层通用结构：85 个 canonical 语义概念，从 16 单据 298 个字段名归并；值形态规则 7 条挂概念；两批单据命名差异表；未覆盖处理链路 + 概念状态机）。
 
 **未做 / 下一步**：
-1. 字段语义词典待补：中英别名全量并入、值形态启发正则正式化（区分重量/计数单位）、概念向量锚（P4）。
+1. ~~字段语义词典待补（中英别名全量、值形态启发正则、概念向量锚）~~ ✅ 已全量完成（concepts.json 85 概念别名全量 + value_shape_heuristic 判别式 + concept_index.json bge-m3 向量锚）。
 2. 剩余素材的批量整理：coding-brain 已穷尽（11 Registry 全转）；docs/performance 剩余约 10 份报告 + session-digests 69 个 + runs 104 个尚未系统读（可借 profiler 半自动化提炼）。
 3. ~~同事 `non_goods_round3_analysis` 转 non_goods 专属 Case~~ ✅ 已转 6 Case + 3 Claim。
 4. ~~Phase 2-MVP（画像引擎 + 规则检索）~~ ✅ 已跑通。

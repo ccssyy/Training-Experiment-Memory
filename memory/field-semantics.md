@@ -249,8 +249,8 @@ canonical 语义概念（通用，跨单据稳定）   ← 检索键之一，与
 2. **审核归属**：消费方上报、memory 侧审核（双向），核心不依赖单一消费方。
 3. **unknown 呈现**：给 Top-N 最接近概念 + 明确的"无高置信匹配"标记，不黑盒、不误导强推。
 
-## 7. 待补
+## 7. 待补（2026-08-15 更新：已基本完成）
 
-1. `hm_alias` 中英别名（buyer_zh/en 等）的完整并入（§1.4 已列部分）。
-2. 值形态启发正则（编号/金额/日期/名称判别式）正式化。
-3. 概念 → bge-m3 向量锚（Phase 2 做，词典先提供文本锚）。
+1. ~~中英别名完整并入~~ ✅ 已全量并入 `phase2/data/concepts.json`（buyer_zh/en、seller_zh/en、consignee_zh/en、factory_zh/en 等 + address 17 个别名）。
+2. 值形态启发正则 ✅ 已落地 `profiler.value_shape_heuristic`（金额/日期/重量尺寸/计数/编号/名称判别式；F4 已拆计数单位 CTN/PCS）。
+3. ~~概念 bge-m3 向量锚~~ ✅ 已建 `concept_index.json`（425 文本片段 → 85 概念，1024 维）。
