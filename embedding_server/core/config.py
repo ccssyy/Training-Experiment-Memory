@@ -10,7 +10,10 @@ class Settings:
     host: str = os.environ.get("HOST", "0.0.0.0")
     port: int = int(os.environ.get("PORT", "9031"))
     gpu_ids: str = os.environ.get("GPU_IDS", "0")
-    instruction: str = "Represent the document layout structure only, ignoring text content and specific details."
+    instruction: str = os.environ.get(
+        "INSTRUCTION",
+        "Represent the document layout structure only, ignoring text content and specific details.",
+    )
     gpu_memory_utilization: float = float(os.environ.get("GPU_MEM_UTIL", "0.1"))
     max_model_len: int = int(os.environ.get("MAX_MODEL_LEN", "4096"))
     max_batch_size: int = int(os.environ.get("MAX_BATCH_SIZE", "500"))
