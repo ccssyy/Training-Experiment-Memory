@@ -4,19 +4,19 @@
 
 ## 1. 单据类型 → doc_type
 
-> 版式索引只覆盖 8 类（表中 ✅ 标注）；其余单据类型脚本会提示「索引未覆盖」并跳过版式视觉确认（仅按声明类型匹配，非报错）。
+> 版式索引覆盖 14 类单据（表中 ✅ 标注，2026-08-17 起 ci/bl/air/pi/sc/po 已补）；索引未覆盖时脚本会提示并跳过版式视觉确认（仅按声明类型匹配，非报错）。
 
 | 用户说法 | doc_type | 版式索引 |
 |---|---|---|
 | 装箱单 / packing list | `packing_list` | ✅ |
-| 商业发票 / invoice / CI | `commercial_invoice` | — |
-| 提单 / bill of lading / BL | `bill_of_lading` | — |
+| 商业发票 / invoice / CI | `commercial_invoice` | ✅ |
+| 提单 / bill of lading / BL | `bill_of_lading` | ✅ |
 | 海运单 / sea waybill / SWB | `sea_waybill` | ✅ |
-| 航空单 / air waybill | `air_waybill` | — |
-| 形式发票 / proforma invoice / PI | `proforma_invoice` | — |
+| 航空单 / air waybill | `air_waybill` | ✅ |
+| 形式发票 / proforma invoice / PI | `proforma_invoice` | ✅ |
 | 销售订单 / sales order / SO | `sales_order` | ✅ |
-| 销售合同 / sales contract / SC | `sales_contract` | — |
-| 购买订单 / purchase order / PO | `purchase_order` | — |
+| 销售合同 / sales contract / SC | `sales_contract` | ✅ |
+| 购买订单 / purchase order / PO | `purchase_order` | ✅ |
 | 贷记通知 / credit note / CR | `credit_note` | ✅ |
 | 借记通知 / debit note / DB | `debit_note` | ✅ |
 | 提货单 / delivery order / DO | `delivery_order` | ✅ |

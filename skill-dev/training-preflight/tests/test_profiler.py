@@ -70,23 +70,31 @@ class TestDocTypeNormalize(unittest.TestCase):
         self.assertEqual(profiler._resolve_index_doc("装箱单", keys), "pl_mixed")
         self.assertEqual(profiler._resolve_index_doc("sea_waybill", keys), "swb_mixed")
         self.assertEqual(profiler._resolve_index_doc("托收", keys), "aco_non_goods")
+        # 2026-08-17 新增覆盖：提单/发票等已建索引
+        self.assertEqual(profiler._resolve_index_doc("提单", keys), "bl")
+        self.assertEqual(profiler._resolve_index_doc("发票", keys), "ci")
+        self.assertEqual(profiler._resolve_index_doc("形式发票", keys), "pi")
+        self.assertEqual(profiler._resolve_index_doc("销售合同", keys), "sc")
 
     def test_resolve_index_uncovered(self):
-        """提单/发票等索引未覆盖 → None（此前"提单"被错误映射到 swb_mixed）。"""
+        """索引未覆盖的单据（loan 等）→ None。"""
         keys = list(profiler._DOC_TYPE_TO_INDEX.values())
-        self.assertIsNone(profiler._resolve_index_doc("提单", keys))
-        self.assertIsNone(profiler._resolve_index_doc("发票", keys))
+        self.assertIsNone(profiler._resolve_index_doc("loan", keys))
+        self.assertIsNone(profiler._resolve_index_doc("报关单", keys))
 
 
 class TestProfileFields(unittest.TestCase):
     def test_layout_doc_uncovered_flag(self):
-        p = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="commercial_invoice")
+        p = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="loan")
         self.assertTrue(p["layout_doc_uncovered"])
-        self.assertEqual(p["doc_type_norm"], "ci")
+        self.assertEqual(p["doc_type_norm"], "loan")
         p2 = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="packing_list")
         self.assertFalse(p2["layout_doc_uncovered"])
-        p3 = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="unknown")
+        # 2026-08-17：发票/提单已建索引，不再标未覆盖
+        p3 = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="commercial_invoice")
         self.assertFalse(p3["layout_doc_uncovered"])
+        p4 = profiler.profile_fields([{"name": "goods_amount", "sample": "USD 535"}], doc_type="unknown")
+        self.assertFalse(p4["layout_doc_uncovered"])
 
     def test_alias_match(self):
         p = profiler.profile_fields([{"name": "goods_quantity", "sample": "1,392 BAGS"}])

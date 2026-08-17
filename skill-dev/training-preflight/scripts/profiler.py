@@ -259,7 +259,7 @@ def embed_layout_vector(image_path, server_url, timeout=60):
 _INDEX_CACHE = None
 _INDEX_CACHE_PATH = None
 
-# 有版式索引的单据类型（8 类）→ index key；ci/bl/air/pi/sc/po 暂无索引（索引未覆盖）
+# 有版式索引的单据类型（14 类）→ index key；2026-08-17 增 ci/bl/air/po/pi/sc
 _DOC_TYPE_TO_INDEX = {
     "pl": "pl_mixed",
     "swb": "swb_mixed",
@@ -269,6 +269,12 @@ _DOC_TYPE_TO_INDEX = {
     "do": "do_mixed",
     "sdn": "sdn_mixed",
     "so": "so_mixed",
+    "ci": "ci",
+    "bl": "bl",
+    "air": "air",
+    "po": "po",
+    "pi": "pi",
+    "sc": "sc",
 }
 
 # 用户说法/文档 doc_type → 单据类型缩写（统一归一化；SKILL.md / concepts.md 第 1 步与此表同步）
@@ -446,7 +452,7 @@ def doc_cn(doc):
     return _DOC_CN.get(_doc_type_of(doc), doc or "")
 
 
-# 单据类型 → 版式结构标签（glm-vision 核 8 单据代表图所得，2026-08-15）
+# 单据类型 → 版式结构标签（glm-vision 核代表图所得；8 类 2026-08-15，6 类 2026-08-17）
 _DOC_LAYOUT = {
     "pl": ["dense_table"],
     "swb": ["multi_block", "cross_page"],
@@ -456,6 +462,12 @@ _DOC_LAYOUT = {
     "do": ["dense_table"],
     "sdn": ["long_table"],
     "so": ["long_table", "cross_page"],
+    "ci": ["multi_block"],
+    "bl": ["multi_block"],
+    "air": ["multi_block"],
+    "po": ["multi_block", "cross_page"],
+    "pi": ["multi_block", "cross_page"],
+    "sc": ["multi_block", "cross_page"],
 }
 
 

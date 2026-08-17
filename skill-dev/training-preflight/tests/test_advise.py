@@ -42,9 +42,9 @@ class TestAdvise(unittest.TestCase):
         self.assertIn("lane 不符", card)
 
     def test_uncovered_hint(self):
-        """发票（ci）索引未覆盖 → 显式提示而非静默。"""
+        """索引未覆盖的单据（loan）→ 显式提示而非静默。"""
         card = advise.advise_from_input({
-            "doc_type": "commercial_invoice",
+            "doc_type": "loan",
             "fields": [{"name": "invoice_no", "sample": "INV-2026-001"}],
         })
         self.assertIn("版式索引未覆盖", card)

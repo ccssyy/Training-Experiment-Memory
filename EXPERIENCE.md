@@ -128,7 +128,7 @@ curl -s http://127.0.0.1:9031/health    # 期望 {"status":"ok"}
 
 | 索引 | 路径 | 内容 |
 |---|---|---|
-| 版式索引 | `indexes/layout_index.json` | 8 单据 2145 版式向量（dim 2048） |
+| 版式索引 | `indexes/layout_index.json` | 14 单据 3879 版式向量（dim 2048，2026-08-17 增 ci/bl/air/po/pi/sc） |
 | 概念索引 | `indexes/concept_index.json` | 85 概念 431 片段（dim 1024） |
 
 完整视觉版调用示例（skill advise.py 走视觉路）：
@@ -143,7 +143,7 @@ echo '{"doc_type":"aco","image_path":"/path/to/sample.png","fields":[{"name":"be
     python3 skill-dev/training-preflight/scripts/advise.py
 ```
 
-> 索引若缺失（比如 git clone 拿到的代码没有索引），可用 `layout_library/build_index.py`（版式，需公网 9030）+ `phase2/build_concept_index.py`（概念，需 bge 9033）重新构建。
+> 索引若缺失（比如 git clone 拿到的代码没有索引），可用 `layout_library/build_index.py`（版式 8 类，需公网 9030）+ `layout_library/build_index_extra.py`（版式新增 6 类，A800 跑）+ `phase2/build_concept_index.py`（概念，需 bge 9033）重新构建。
 
 ## 文档
 
