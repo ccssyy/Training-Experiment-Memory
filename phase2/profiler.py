@@ -72,27 +72,34 @@ def value_shape_heuristic(sample):
     """值形态启发：根据样例值判断 value_shape / semantic。
 
     返回 (value_shape, extra_semantic)。启发规则从 field-semantics.md 值形态规则提炼。
+    支持中英文值形态（人民币/中文日期/中文数量与重量单位）。
     """
     if sample is None or sample == "":
         return None, []
     s = str(sample).strip()
-    # 金额：币种符号/代码 + 数字
-    if re.search(r"[\$€£¥]|USD|CNY|HKD|EUR|CHF|RMB", s, re.I) and re.search(r"\d", s):
+    # 金额：币种符号/代码 + 数字（含人民币 ¥/￥/元/人民币）
+    if re.search(r"[\$€£¥￥]|USD|CNY|HKD|EUR|CHF|RMB", s, re.I) and re.search(r"\d", s):
         return "currency_amount", ["monetary"]
-    # 日期：形如 2026-03-25 / 25 MAR 2026
-    if re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s) or re.search(r"\d{1,2}\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s*\d{4}", s, re.I):
+    if re.search(r"\d[\d,\.]*\s*(元|人民币)", s) or re.search(r"人民币\s*\d", s):
+        return "currency_amount", ["monetary"]
+    # 日期：YYYY/M/D、D MON YYYY、YYYY年M月D日
+    if re.search(r"\d{4}[-/]\d{1,2}[-/]\d{1,2}", s) \
+            or re.search(r"\d{1,2}\s*(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEP|OCT|NOV|DEC)\s*\d{4}", s, re.I) \
+            or re.search(r"\d{4}年\d{1,2}月\d{1,2}日?", s):
         return "date_value", ["temporal"]
-    # 数值+重量/尺寸单位
-    if re.search(r"\d+(\.\d+)?\s*(KG|KGS|LB|LBS|MT|CBM|M3|CM|MM)\b", s, re.I):
+    # 数值+重量/尺寸单位（英文 + 中文）
+    if re.search(r"\d+(\.\d+)?\s*(KG|KGS|LB|LBS|MT|CBM|M3|CM|MM)\b", s, re.I) \
+            or re.search(r"\d+(\.\d+)?\s*(公斤|千克|克|吨|厘米|米|立方米)", s):
         return "numeric_unit", ["weight", "size"]
-    # 数值+计数单位（箱/件/包，计数非重量尺寸）
-    if re.search(r"\d+(\.\d+)?\s*(CTN|CTNS|PCS|CARTON|BAG|BAGS|PKG|PKGS|SET|SETS|UNIT|UNITS|EA)\b", s, re.I):
+    # 数值+计数单位（箱/件/袋…，计数非重量尺寸；英文 + 中文）
+    if re.search(r"\d+(\.\d+)?\s*(CTN|CTNS|PCS|CARTON|BAG|BAGS|PKG|PKGS|SET|SETS|UNIT|UNITS|EA)\b", s, re.I) \
+            or re.search(r"\d+(\.\d+)?\s*(箱|件|袋|包|套|个|只|台|卷|捆|瓶|盒)", s):
         return "numeric_value", ["quantity"]
     # 纯数值
     if re.fullmatch(r"[\d,\.\s]+", s):
         return "numeric_value", ["quantity"]
-    # 编号（字母数字混合）
-    if re.search(r"[A-Z]{2,}[0-9]|[0-9][A-Z]{2,}", s):
+    # 编号：字母数字混合，或含分隔符（连字符/斜杠/点）的字母数字串（INV-2026-001 / AWB/123 / SKU.882）
+    if re.search(r"[A-Z]{2,}[0-9]|[0-9][A-Z]{2,}|[A-Z0-9]{2,}[-/.][A-Z0-9]{2,}", s):
         return "code_value", ["identifier"]
     # 长文本
     if len(s) > 40:
@@ -200,8 +207,12 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
                 except Exception:
                     pass
 
+    _doc_norm = _normalize_doc_type(doc_type)
     return {
         "doc_type": doc_type,
+        "doc_type_norm": _doc_norm,
+        # 索引未覆盖：声明了单据类型但版式索引没有该类（ci/bl/air/pi/sc/po）；unknown/空不算
+        "layout_doc_uncovered": bool(_doc_norm) and _doc_norm not in _DOC_TYPE_TO_INDEX and _doc_norm != "unknown",
         "fields": field_profile,
         "semantic_tags": sorted(semantic_tags),
         "value_shapes": sorted(vs for vs in value_shapes if vs),
@@ -248,16 +259,69 @@ def embed_layout_vector(image_path, server_url, timeout=60):
 _INDEX_CACHE = None
 _INDEX_CACHE_PATH = None
 
+# 有版式索引的单据类型（8 类）→ index key；ci/bl/air/pi/sc/po 暂无索引（索引未覆盖）
 _DOC_TYPE_TO_INDEX = {
-    "packing_list": "pl_mixed", "pl": "pl_mixed", "装箱单": "pl_mixed",
-    "aco": "aco_non_goods", "托收": "aco_non_goods", "collection": "aco_non_goods",
-    "crn": "crn_mixed", "贷记": "crn_mixed", "credit": "crn_mixed",
-    "dbn": "dbn_mixed", "借记": "dbn_mixed", "debit": "dbn_mixed",
-    "do": "do_mixed", "提货": "do_mixed", "delivery": "do_mixed",
-    "sdn": "sdn_mixed", "发货": "sdn_mixed",
-    "so": "so_mixed", "销售订单": "so_mixed", "sales_order": "so_mixed",
-    "swb": "swb_mixed", "海运": "swb_mixed", "waybill": "swb_mixed", "提单": "swb_mixed",
+    "pl": "pl_mixed",
+    "swb": "swb_mixed",
+    "aco": "aco_non_goods",
+    "crn": "crn_mixed",
+    "dbn": "dbn_mixed",
+    "do": "do_mixed",
+    "sdn": "sdn_mixed",
+    "so": "so_mixed",
 }
+
+# 用户说法/文档 doc_type → 单据类型缩写（统一归一化；SKILL.md / concepts.md 第 1 步与此表同步）
+_DOC_TYPE_ALIAS = {
+    # pl 装箱单
+    "packing_list": "pl", "装箱单": "pl", "pl": "pl",
+    # swb 海运单（注意：提单 BL ≠ 海运单 SWB）
+    "sea_waybill": "swb", "海运单": "swb", "海运": "swb", "waybill": "swb", "swb": "swb",
+    # aco 出口托收
+    "aco": "aco", "托收": "aco", "collection": "aco",
+    # crn 贷记通知
+    "crn": "crn", "贷记通知": "crn", "credit_note": "crn", "贷记": "crn", "credit": "crn",
+    # dbn 借记通知
+    "dbn": "dbn", "借记通知": "dbn", "debit_note": "dbn", "借记": "dbn", "debit": "dbn",
+    # do 提货单
+    "do": "do", "提货单": "do", "delivery_order": "do", "提货": "do", "delivery": "do",
+    # sdn 发货单
+    "sdn": "sdn", "发货单": "sdn", "shipping_note": "sdn", "发货": "sdn", "despatch_note": "sdn",
+    # so 销售订单
+    "so": "so", "销售订单": "so", "sales_order": "so",
+    # ci 商业发票（版式索引未覆盖）
+    "ci": "ci", "commercial_invoice": "ci", "商业发票": "ci", "invoice": "ci", "发票": "ci",
+    # bl 提单（版式索引未覆盖）
+    "bl": "bl", "bill_of_lading": "bl", "提单": "bl",
+    # air 航空运单（版式索引未覆盖）
+    "air": "air", "air_waybill": "air", "航空运单": "air", "航空单": "air",
+    # pi 形式发票（版式索引未覆盖）
+    "pi": "pi", "proforma_invoice": "pi", "形式发票": "pi",
+    # sc 销售合同（版式索引未覆盖）
+    "sc": "sc", "sales_contract": "sc", "销售合同": "sc",
+    # po 购买订单（版式索引未覆盖）
+    "po": "po", "purchase_order": "po", "购买订单": "po",
+}
+
+
+def _normalize_doc_type(doc_type):
+    """用户说法/文档 doc_type → 单据类型缩写（pl/swb/aco/.../ci/bl/air/pi/sc/po）。
+
+    精确命中 _DOC_TYPE_ALIAS 优先；否则对长度 ≥3 的别名做包含匹配（如 "packing_list_2"→pl）。
+    归一化失败（unknown/空/陌生词）返回原值。
+    """
+    if not doc_type:
+        return doc_type
+    dt = str(doc_type).strip().lower()
+    dt = re.sub(r"[\s\-]+", "_", dt)
+    if dt in _DOC_TYPE_ALIAS:
+        return _DOC_TYPE_ALIAS[dt]
+    if dt in _DOC_CN:
+        return dt
+    for k, v in _DOC_TYPE_ALIAS.items():
+        if len(k) >= 3 and k in dt:
+            return v
+    return dt
 
 
 def load_layout_index(index_path):
@@ -271,17 +335,24 @@ def load_layout_index(index_path):
 
 
 def _resolve_index_doc(doc_type, index_keys):
-    """把语义 doc_type 映射到 index 的单据 key；映射不上返回 None。"""
-    dt = (doc_type or "").strip()
+    """语义 doc_type → index 的单据 key（先归一化到类型缩写，再查有索引类型）。
+
+    索引未覆盖的单据（ci/bl/air/pi/sc/po 等）返回 None——调用方应显式提示，
+    而非静默跳过视觉确认。
+    """
+    dt = _normalize_doc_type(doc_type)
+    if not dt:
+        return None
     if dt in index_keys:
         return dt
     if dt in _DOC_TYPE_TO_INDEX:
-        return _DOC_TYPE_TO_INDEX[dt]
-    # 模糊：index key 的关键词出现在 doc_type 里
-    lowered = dt.lower()
+        key = _DOC_TYPE_TO_INDEX[dt]
+        if key in index_keys:
+            return key
+    # 兼容：index key 的关键词出现在归一化结果里
     for key in index_keys:
         stem = key.split("_")[0]  # aco_non_goods -> aco
-        if stem and (stem in lowered or lowered in stem):
+        if stem and (stem in dt or dt in stem):
             return key
     return None
 
@@ -327,6 +398,12 @@ _DOC_CN = {
     "do": "提货单",
     "sdn": "发货单",
     "so": "销售订单",
+    "ci": "商业发票",
+    "bl": "提单",
+    "air": "航空运单",
+    "pi": "形式发票",
+    "sc": "销售合同",
+    "po": "购买订单",
 }
 
 # 标注字段范围后缀 → 中文说明

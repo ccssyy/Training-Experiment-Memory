@@ -117,6 +117,10 @@ def _match_mechanism(mechanism, profile):
     不含易变字段类型——机制层命中不看 lane/doc_types。
     """
     sp = mechanism.get("structural_preconditions") or {}
+    # 画像无任何语义信息（空画像/全未知字段）→ 机制前提无从验证，不匹配
+    # （避免「画像越空、机制越容易命中」的假阳性：完全陌生任务应诚实降级）
+    if not profile.get("semantic_tags"):
+        return False
     for dim, prof_key in (("semantic", "semantic_tags"), ("cardinality", "cardinalities"),
                           ("value_shape", "value_shapes"), ("layout", "layout_tags")):
         if sp.get(dim):
@@ -197,11 +201,38 @@ def _effective_profile(profile):
     return p
 
 
+def _when_miss_reason(claim, profile):
+    """生成 when 未满足的可读原因（near-miss 提示用）。"""
+    app = claim.get("applicability") or {}
+    when = app.get("when") or {}
+    task_shape = profile.get("task_shape") or {}
+    reasons = []
+    if when.get("lane"):
+        p_lane = task_shape.get("lane") or profile.get("layout_doc_lane")
+        if p_lane and p_lane not in when["lane"]:
+            reasons.append(f"lane 不符（经验适用 {when['lane']}，当前 {p_lane}）")
+    if when.get("languages"):
+        p_langs = task_shape.get("languages") or []
+        if p_langs and not (set(p_langs) & set(when["languages"])):
+            reasons.append(f"语言不符（经验适用 {when['languages']}）")
+    if when.get("doc_types"):
+        p_doc = profile.get("doc_type")
+        if p_doc and p_doc not in when["doc_types"]:
+            reasons.append(f"单据类型不符（经验适用 {when['doc_types']}，当前 {p_doc}）")
+    for dim, prof_key in (("cardinality", "cardinalities"), ("value_shape", "value_shapes"), ("layout", "layout_tags")):
+        if when.get(dim):
+            p_vals = set(profile.get(prof_key) or [])
+            if p_vals and not (p_vals & set(when[dim])):
+                reasons.append(f"{dim} 不符（经验需 {when[dim]}，画像无对应）")
+    return "; ".join(reasons) or "适用性条件未满足"
+
+
 def retrieve_with_mechanism(profile, top_k=5):
-    """检索 + 机制层。返回 (results, mechanism_fallbacks)。
+    """检索 + 机制层。返回 (results, mechanism_fallbacks, near_miss)。
 
     results：现有格式，外加 mechanism_id/mechanism_name 字段。
-    mechanism_fallbacks：命中机制（结构属性）但无匹配 Claim 实例的机制（③b 兜底：推荐机制+提示）。
+    mechanism_fallbacks：命中机制（结构属性）但无匹配 Claim 实例的机制（③b 兜底）。
+    near_miss：标签命中但被 when/值形态拒绝的 Claim（相近但未命中，供人工判断是否放宽）。
     """
     profile = _effective_profile(profile)
     claims = load_claims()
@@ -211,17 +242,32 @@ def retrieve_with_mechanism(profile, top_k=5):
     # ① 命中机制（结构属性，不看字段类型）
     matched_mechs = [m for m in mechanisms if _match_mechanism(m, profile)]
 
-    # ② 定位 Claim 实例（现有逻辑，加机制信息）
+    # ② 定位 Claim 实例（现有逻辑，加机制信息）+ 收集 near-miss
     results = []
+    near_miss = []
     for c in claims:
-        if _value_shape_filter(c, profile):
-            continue  # 值形态不匹配直接过滤
-        when_ok, contra_hits = _applicability_check(c, profile)
-        if not when_ok:
-            continue  # when 不满足 → 不推荐
         score, matched = score_claim(c, profile)
         if score <= 0:
+            continue  # 标签零命中，不值得提示
+        if _value_shape_filter(c, profile):
+            near_miss.append({
+                "claim_id": c["claim_id"],
+                "mechanism_name": mech_by_id[c.get("mechanism_id")]["name"] if c.get("mechanism_id") in mech_by_id else None,
+                "problem_pattern": c["problem_pattern"],
+                "score": score,
+                "reason": "值形态不匹配（如行级归组经验 vs 单值字段）",
+            })
             continue
+        when_ok, contra_hits = _applicability_check(c, profile)
+        if not when_ok:
+            near_miss.append({
+                "claim_id": c["claim_id"],
+                "mechanism_name": mech_by_id[c.get("mechanism_id")]["name"] if c.get("mechanism_id") in mech_by_id else None,
+                "problem_pattern": c["problem_pattern"],
+                "score": score,
+                "reason": _when_miss_reason(c, profile),
+            })
+            continue  # when 不满足 → 不推荐
         if contra_hits:
             score = max(0.0, score - 0.5)  # 命中失效边界 → 显著降权
         mid = c.get("mechanism_id")
@@ -243,17 +289,18 @@ def retrieve_with_mechanism(profile, top_k=5):
             "supported_by": c["supported_by"],
         })
     results.sort(key=lambda r: -r["score"])
+    near_miss.sort(key=lambda n: -n["score"])
 
     # ③b 兜底：命中机制但无匹配实例
     hit_mech_ids = {r["mechanism_id"] for r in results if r.get("mechanism_id")}
     fallbacks = [m for m in matched_mechs if m["mechanism_id"] not in hit_mech_ids]
 
-    return results[:top_k], fallbacks
+    return results[:top_k], fallbacks, near_miss[:5]
 
 
 def retrieve(profile, top_k=5):
     """返回 top-k Claim 列表，含分数、匹配标签、transfer_level（向后兼容）。"""
-    results, _ = retrieve_with_mechanism(profile, top_k)
+    results, _, _ = retrieve_with_mechanism(profile, top_k)
     return results
 
 

@@ -21,7 +21,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from profiler import profile_fields
-from retriever import retrieve
+from retriever import retrieve_with_mechanism
 from advisor import render_card
 
 
@@ -39,8 +39,9 @@ def advise_from_input(inp):
         concept_embedding_server=inp.get("concept_embedding_server") or os.environ.get("CONCEPT_EMBEDDING_SERVER"),
         concept_index_path=inp.get("concept_index_path") or os.environ.get("CONCEPT_INDEX"),
     )
-    ranked = retrieve(profile, top_k=inp.get("top_k", 5))
-    return render_card(profile, ranked)
+    # 用 retrieve_with_mechanism：既得 top-k 实例，也保留「命中机制但无实例」的 ③b 兜底 + near-miss
+    ranked, fallbacks, near_miss = retrieve_with_mechanism(profile, top_k=inp.get("top_k", 5))
+    return render_card(profile, ranked, mechanism_fallbacks=fallbacks, near_miss=near_miss)
 
 
 def main():
