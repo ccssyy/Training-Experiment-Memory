@@ -1,7 +1,7 @@
-# 训练经验 Memory — 同事体验指南（A800 共享目录）
+# 训练经验 Memory — 体验指南（A800 共享目录）
 
 > 位置：`/data/collab/training-experience-memory/`
-> 这是「当前整理版 memory 库」的**独立体验副本**，与开发者版本（`/data/sam`）物理隔离——**随便改、随便跑，不影响开发版**。
+> 这是「当前整理版 memory 库」的**独立体验副本**，与开发版本物理隔离——**随便改、随便跑，不影响开发版**。
 
 ## 这是什么
 
@@ -40,15 +40,32 @@ cp -r /data/collab/training-experience-memory/skill-dev/training-preflight ~/.co
 
 ## 在自己 mac 上体验（无需 A800）
 
+两种拿代码的方式：
+
+**方式一：从 A800 共享目录下载（推荐，含索引，约 108MB）**
+
+```bash
+scp -r [开发机]:/data/collab/training-experience-memory ./training-experience-memory
+# 或 rsync（支持断点续传）
+rsync -av [开发机]:/data/collab/training-experience-memory/ ./training-experience-memory/
+cd training-experience-memory/phase2 && python3 demo.py
+```
+
+这样连 `indexes/` 下的两个向量索引一起拿到，视觉版也能用。
+
+**方式二：git clone（纯代码，无索引）**
+
 ```bash
 git clone https://github.com/[GitHub账号]/Training-Experiment-Memory.git
-cd Training-Experiment-Memory/phase2 && python3 demo.py        # 纯字段版，零 GPU 零依赖
+cd Training-Experiment-Memory/phase2 && python3 demo.py
 ```
+
+git 里没有 `indexes/` 大索引，视觉版需自行重建（见文末索引说明）。
 
 - **纯字段版**（画像→检索→建议卡）只用标准库，任何 mac 的 python3 都能跑，这是核心体验，够用。
 - **视觉版**（可选，需 embedding）：
-  - bge-m3（字段语义向量，568M）mac CPU 就能跑，或 HTTP 调 A800 `9033`；
-  - qwen3-vl-embedding（版式视觉，2B）走 HTTP 调公网 `http://124.220.53.207:9030`（同事已部署，无需自起）。
+  - bge-m3（字段语义向量，568M）mac CPU 就能跑，或 HTTP 调远程 `9033`；
+  - qwen3-vl-embedding（版式视觉，2B）走 HTTP 调公网 `http://124.220.53.207:9030`（公共部署，无需自起）。
   - 即：本地跑规则 + 远程调 embedding 服务。
 
 ## memory 数据在哪
@@ -68,14 +85,14 @@ phase2/data/
 
 模型在公共目录 `/data/LLM_model/`（Qwen3-VL-Embedding-2B、bge-m3）。
 
-**版式服务（qwen3-vl-embedding）：开发与同事体验共用公网服务**
+**版式服务（qwen3-vl-embedding）：统一共用公网服务**
 
-`http://124.220.53.207:9030`（同事已部署的 Qwen3-VL-Embedding-2B，dim=2048），**无需自起**，直接调。
+`http://124.220.53.207:9030`（公共 Qwen3-VL-Embedding-2B，dim=2048），**无需自起**，直接调。
 
 **bge 服务（字段语义向量）：各容器自起**
 
 ```bash
-PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python   # 复用共享 env（含 transformers+fastapi）
+PY=<含 transformers+fastapi 的 python 环境>/bin/python   # 复用共享环境
 cd /data/collab/training-experience-memory/bge_embedding_server
 MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
 curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
@@ -88,13 +105,13 @@ curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
 前提：你的容器已挂载 `/data`（`-v /data:/data`）+ GPU 权限（`--gpus all`）。
 
 ```bash
-PY=/data/sam/env/torch210_vllm0181_bnb_qwen3vl/bin/python
+PY=<含 vllm+fastapi 的 python 环境>/bin/python
 cd /data/collab/training-experience-memory/embedding_server
 MODEL_PATH=/data/LLM_model/Qwen3-VL-Embedding-2B PORT=9031 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
 curl -s http://127.0.0.1:9031/health    # 期望 {"status":"ok"}
 ```
 
-> 卡号提示：8 卡 A800，当前 GPU 7（开发者 bge）已占用，其余空闲。同事自起 bge/版式时 `<空闲卡号>` 选空闲卡即可；同一张卡跑两个进程需各自设 `GPU_MEM_UTIL` 分摊显存（如各 0.4）。
+> 卡号提示：8 卡 A800，当前 GPU 7（bge）已占用，其余空闲。自起 bge/版式时 `<空闲卡号>` 选空闲卡即可；同一张卡跑两个进程需各自设 `GPU_MEM_UTIL` 分摊显存（如各 0.4）。
 
 给 profiler 传 `image_path` + `embedding_server`（版式地址）+ `concept_embedding_server`（bge 地址）+ `index_path` 即走完整视觉路；不传则纯字段版（零依赖）。
 
@@ -117,7 +134,7 @@ echo '{"doc_type":"aco","image_path":"/path/to/sample.png","fields":[{"name":"be
     python3 skill-dev/training-preflight/scripts/advise.py
 ```
 
-> 索引若缺失（比如你自己 clone git 到别处），可用 `layout_library/build_index.py`（版式，需公网 9030）+ `phase2/build_concept_index.py`（概念，需 bge 9033）重新构建。
+> 索引若缺失（比如 git clone 拿到的代码没有索引），可用 `layout_library/build_index.py`（版式，需公网 9030）+ `phase2/build_concept_index.py`（概念，需 bge 9033）重新构建。
 
 ## 文档
 
