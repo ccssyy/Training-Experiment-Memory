@@ -112,5 +112,32 @@ class TestProfileFields(unittest.TestCase):
         self.assertIn("totally_unknown_xyz", p["unmatched_fields"])
 
 
+class TestNearConcepts(unittest.TestCase):
+    """未匹配字段的最接近概念候选（2026-08-17 产品优化）。"""
+
+    def test_bank_near(self):
+        near = profiler._near_concepts("bank", profiler.load_concepts())
+        self.assertEqual(near[0]["concept"], "bank.issuing")
+        self.assertGreaterEqual(near[0]["score"], 0.85)
+
+    def test_qty_variant(self):
+        near = profiler._near_concepts("qty_of_goods", profiler.load_concepts())
+        self.assertEqual(near[0]["concept"], "quantity")
+
+    def test_shipment_date_variant(self):
+        near = profiler._near_concepts("shipment_date_x", profiler.load_concepts())
+        self.assertEqual(near[0]["concept"], "date.shipment")
+
+    def test_completely_unknown(self):
+        self.assertEqual(profiler._near_concepts("zzzz_unknown", profiler.load_concepts()), [])
+
+    def test_profile_carries_near_concepts(self):
+        p = profiler.profile_fields([{"name": "bank", "sample": "HSBC"}])
+        f = p["fields"][0]
+        self.assertEqual(f["matched_by"], "none")
+        self.assertTrue(f["near_concepts"])
+        self.assertEqual(f["near_concepts"][0]["concept"], "bank.issuing")
+
+
 if __name__ == "__main__":
     unittest.main()

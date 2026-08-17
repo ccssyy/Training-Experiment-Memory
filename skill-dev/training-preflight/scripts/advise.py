@@ -52,7 +52,18 @@ def main():
     else:
         print(__doc__, file=sys.stderr)
         sys.exit(2)
-    inp = json.loads(raw)
+    try:
+        inp = json.loads(raw)
+    except json.JSONDecodeError as e:
+        print(f"输入不是合法 JSON：{e}\n\n用法见：\n{__doc__}", file=sys.stderr)
+        sys.exit(2)
+    if not isinstance(inp, dict):
+        print("输入应为 JSON 对象（含 doc_type / fields 字段），如 "
+              '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,392 BAGS"}]}', file=sys.stderr)
+        sys.exit(2)
+    if not inp.get("fields"):
+        print('fields 不能为空：请提供字段列表 [{"name":..., "sample":...}, ...]（sample 可选）', file=sys.stderr)
+        sys.exit(2)
     print(advise_from_input(inp))
 
 

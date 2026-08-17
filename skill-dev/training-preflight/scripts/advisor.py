@@ -56,8 +56,36 @@ def render_card(profile, ranked, mechanism_fallbacks=None, near_miss=None):
             f"视觉判定更像 {cn}（{dtype}），请核对是否标错或拿错样例图"
         )
     if profile.get("unmatched_fields"):
-        lines.append(f"- 未匹配字段（需人工确认语义）：{', '.join(profile['unmatched_fields'])}")
+        parts = []
+        for f in profile.get("fields", []):
+            if f.get("matched_by") != "none":
+                continue
+            near = f.get("near_concepts") or []
+            if near:
+                cand = "、".join(f"{n['concept']}（{n['score']}）" for n in near)
+                parts.append(f"{f['name']} → 最接近 {cand}")
+            else:
+                parts.append(f["name"])
+        lines.append(f"- 未匹配字段（需人工确认语义）：{'; '.join(parts)}")
     lines.append("")
+
+    if ranked:
+        # 核心建议（执行摘要）：top-1 一句话 + 关键风险提示
+        top = ranked[0]
+        lines.append("## 核心建议\n")
+        lines.append(f"- **首选策略**：{top['claim_id']}（{top['problem_pattern']}）→ {top['intervention_strategy']}")
+        risks = []
+        if profile.get("layout_doc_conflict"):
+            risks.append("样例图与声明单据类型不一致，先核对")
+        if mechanism_fallbacks:
+            risks.append(f"{len(mechanism_fallbacks)} 个机制命中但无当前字段类型实例，谨慎参考")
+        if near_miss:
+            risks.append(f"{len(near_miss)} 条相近经验被适用性条件拒绝，可评估是否放宽")
+        if profile.get("unmatched_fields"):
+            risks.append(f"{len(profile['unmatched_fields'])} 个字段未匹配，需确认语义")
+        if risks:
+            lines.append(f"- **注意**：{'；'.join(risks)}")
+        lines.append("")
 
     if not ranked:
         if mechanism_fallbacks:
@@ -83,6 +111,20 @@ def render_card(profile, ranked, mechanism_fallbacks=None, near_miss=None):
         lines.append(f"### {i}. {r['claim_id']}（{r['status']}，迁移层级 {r['transfer_level']}）\n")
         if r.get("mechanism_name"):
             lines.append(f"- **归属机制**：{r['mechanism_name']}")
+        # 分数可解释：总分 + 构成（语义/版式比例 + 状态加权）
+        d = r.get("score_detail") or {}
+        parts_detail = []
+        if "semantic_ratio" in d:
+            parts_detail.append(f"语义命中率 {d['semantic_ratio']}")
+        if "layout_ratio" in d:
+            parts_detail.append(f"版式命中率 {d['layout_ratio']}")
+        if d.get("trigger"):
+            parts_detail.append("触发词命中")
+        if d.get("contra_penalty"):
+            parts_detail.append(f"失效边界命中 {d['contra_penalty']}")
+        if d.get("status_bonus"):
+            parts_detail.append(f"状态加权 +{d['status_bonus']}")
+        lines.append(f"- **匹配分数**：{r['score']}" + (f"（{'，'.join(parts_detail)}）" if parts_detail else ""))
         lines.append(f"- **问题模式**：{r['problem_pattern']}")
         lines.append(f"- **建议干预**：{r['intervention_strategy']}")
         lines.append(f"- **命中标签**：语义 {r['matched_tags']['semantic'] or '—'} / 版式 {r['matched_tags']['layout'] or '—'}")

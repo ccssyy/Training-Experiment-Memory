@@ -135,8 +135,10 @@ def _match_mechanism(mechanism, profile):
 
 
 def score_claim(claim, profile):
-    """规则打分。返回 (score, matched_tags)。
+    """规则打分。返回 (score, matched_tags, score_detail)。
 
+    score_detail：分数构成（semantic_ratio/layout_ratio/trigger/status_bonus），
+    供建议卡可解释展示（为什么是这个分数）。
     原则：有语义标签的 claim 以语义命中为主信号，版式只做加分、不兜底；
     语义为空的"上下文类"claim（训练稳定性/运行时/评估口径）靠 task_shape.triggers 命中。
     """
@@ -154,28 +156,38 @@ def score_claim(claim, profile):
     n_sem = len(matched["semantic"])
     n_lay = len(matched["layout"])
 
+    detail = {}
     if claim_sem:
         # 有语义标签：语义是主信号，零语义命中则版式不兜底
         if n_sem == 0:
-            return 0.0, matched
-        score = 0.7 * (n_sem / len(claim_sem)) + 0.3 * (n_lay / max(1, len(claim_lay)))
+            return 0.0, matched, {"semantic_ratio": 0.0}
+        sem_ratio = n_sem / len(claim_sem)
+        lay_ratio = n_lay / max(1, len(claim_lay))
+        score = 0.7 * sem_ratio + 0.3 * lay_ratio
+        detail = {"semantic_ratio": round(sem_ratio, 3), "layout_ratio": round(lay_ratio, 3)}
     else:
         # 上下文类 claim（semantic 空）：靠 task_shape.triggers 命中
         n_trig = _trigger_overlap(claim, profile, matched)
         if n_trig > 0:
             score = 0.8  # 触发词命中是强信号
+            detail = {"trigger": True}
         elif n_lay > 0:
-            score = 0.3 * (n_lay / len(claim_lay))
+            lay_ratio = n_lay / len(claim_lay)
+            score = 0.3 * lay_ratio
+            detail = {"layout_ratio": round(lay_ratio, 3)}
         else:
-            return 0.0, matched
+            return 0.0, matched, {}
 
     # status 加权：validated（干预验证）> confirmed（归因/诊断确认）
+    bonus = 0.0
     if claim["status"] == "validated":
-        score += 0.15
+        bonus = 0.15
     elif claim["status"] == "confirmed":
-        score += 0.08
+        bonus = 0.08
+    score += bonus
+    detail["status_bonus"] = bonus
 
-    return round(score, 4), matched
+    return round(score, 4), matched, detail
 
 
 def _trigger_overlap(claim, profile, matched):
@@ -246,7 +258,7 @@ def retrieve_with_mechanism(profile, top_k=5):
     results = []
     near_miss = []
     for c in claims:
-        score, matched = score_claim(c, profile)
+        score, matched, detail = score_claim(c, profile)
         if score <= 0:
             continue  # 标签零命中，不值得提示
         if _value_shape_filter(c, profile):
@@ -270,6 +282,7 @@ def retrieve_with_mechanism(profile, top_k=5):
             continue  # when 不满足 → 不推荐
         if contra_hits:
             score = max(0.0, score - 0.5)  # 命中失效边界 → 显著降权
+            detail["contra_penalty"] = -0.5  # 分数构成里说明降权，保持可解释自洽
         mid = c.get("mechanism_id")
         results.append({
             "claim_id": c["claim_id"],
@@ -277,6 +290,7 @@ def retrieve_with_mechanism(profile, top_k=5):
             "mechanism_name": mech_by_id[mid]["name"] if mid in mech_by_id else None,
             "status": c["status"],
             "score": round(score, 4),
+            "score_detail": detail,
             "matched_tags": matched,
             "transfer_level": c["applicability"].get("transfer_level"),
             "problem_pattern": c["problem_pattern"],

@@ -7,6 +7,7 @@ MVP 三路匹配只实现前两路（别名表 + 值形态启发），向量路�
 import json
 import re
 import os
+from difflib import SequenceMatcher
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data")
@@ -66,6 +67,34 @@ def match_concept_by_vector(field_name, server_url, entries, top_k=1, threshold=
 def _norm(name):
     """字段名归一化：小写、去下划线/连字符，用于别名匹配。"""
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
+
+
+def _near_concepts(name, concepts, top_k=3, threshold=0.6):
+    """未匹配字段 → 最接近的 top-k 概念候选（模糊匹配）。
+
+    归一化后与全部别名比较（编辑距离 ratio + 包含关系加权：如 beneficiary_bank_2 含 bank），
+    每概念取最优别名得分。返回 [{"concept", "score", "alias"}]，score 降序、≥ threshold。
+    用于给「未匹配字段」提供语义候选，引导人工确认（而不是干列字段名）。
+    """
+    norm = _norm(name)
+    if not norm:
+        return []
+    scored = {}
+    for c in concepts:
+        best, best_alias = 0.0, ""
+        for a in c["aliases"]:
+            na = _norm(a)
+            if not na:
+                continue
+            r = SequenceMatcher(None, norm, na).ratio()
+            # 包含关系加权：字段名含别名（或反之），如 "bank" ⊂ "beneficiary_bank"
+            if na and (norm in na or na in norm):
+                r = max(r, 0.85 + 0.1 * min(len(na), len(norm)) / max(len(na), len(norm)))
+            if r > best:
+                best, best_alias = r, a
+        if best >= threshold:
+            scored[c["c"]] = {"concept": c["c"], "score": round(best, 3), "alias": best_alias}
+    return sorted(scored.values(), key=lambda x: -x["score"])[:top_k]
 
 
 def value_shape_heuristic(sample):
@@ -149,6 +178,9 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
                 concept = vhit[0]
                 matched_by = "vector"
 
+        # 别名表 + 向量都未命中 → 模糊匹配最接近概念（引导人工确认语义）
+        near = _near_concepts(name, concepts) if concept is None else []
+
         vs, extra_sem = value_shape_heuristic(sample)
         sem = set()
 
@@ -175,6 +207,7 @@ def profile_fields(fields, doc_type=None, task_shape=None, image_path=None, embe
             "sample": sample,
             "concept": concept,
             "matched_by": matched_by,
+            "near_concepts": near,
             "semantic": sorted(sem),
             "value_shape": vs,
             "cardinality": card,

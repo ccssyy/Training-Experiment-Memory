@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
-"""advise 入口回归测试：端到端建议卡、③b 兜底、索引未覆盖提示、未知字段降级。
+"""advise 入口回归测试：端到端建议卡、③b 兜底、索引未覆盖提示、未知字段降级、输入容错。
 
 运行：python3 -m unittest discover -s tests -v
 """
 import os
+import subprocess
 import sys
 import unittest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+SCRIPT_DIR = os.path.join(os.path.dirname(__file__), "..", "scripts")
+sys.path.insert(0, SCRIPT_DIR)
 
 import advise
 
@@ -56,6 +58,33 @@ class TestAdvise(unittest.TestCase):
             "fields": [{"name": "totally_unknown_field_xyz", "sample": "zzz"}],
         })
         self.assertIn("无匹配经验", card)
+
+    def test_card_has_summary_and_score(self):
+        """核心建议段 + 匹配分数可解释（2026-08-17 产品优化）。"""
+        card = advise.advise_from_input({
+            "doc_type": "packing_list",
+            "fields": [{"name": "goods_quantity", "sample": "1,392 BAGS"},
+                       {"name": "bank", "sample": "HSBC"}],
+        })
+        self.assertIn("核心建议", card)
+        self.assertIn("匹配分数", card)
+        self.assertIn("语义命中率", card)
+        # 未匹配字段带最接近概念候选
+        self.assertIn("最接近", card)
+
+    def test_bad_json_exit2(self):
+        """非法 JSON 输入 → 友好报错 + 退出码 2（2026-08-17 容错）。"""
+        r = subprocess.run([sys.executable, os.path.join(SCRIPT_DIR, "advise.py")],
+                           input="not json", capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("不是合法 JSON", r.stderr)
+
+    def test_empty_fields_exit2(self):
+        """空 fields → 友好报错 + 退出码 2。"""
+        r = subprocess.run([sys.executable, os.path.join(SCRIPT_DIR, "advise.py")],
+                           input='{"doc_type":"packing_list","fields":[]}', capture_output=True, text=True)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("fields 不能为空", r.stderr)
 
 
 if __name__ == "__main__":
