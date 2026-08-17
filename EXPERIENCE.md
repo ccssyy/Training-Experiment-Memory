@@ -56,7 +56,7 @@ cd training-experience-memory/phase2 && python3 demo.py
 **方式二：git clone（纯代码，无索引）**
 
 ```bash
-git clone https://github.com/[GitHub账号]/Training-Experiment-Memory.git
+git clone https://github.com/ccssyy/Training-Experiment-Memory.git
 cd Training-Experiment-Memory/phase2 && python3 demo.py
 ```
 

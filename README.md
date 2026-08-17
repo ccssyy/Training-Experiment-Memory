@@ -1,7 +1,7 @@
 # 训练经验 Memory
 
 > 独立于 ATF 的通用训练经验系统：训练前用历史经验分析新任务（画像 → 检索 → 建议卡），训练后把验证有效的修复沉淀回记忆库（回灌闭环）。
-> 仓库：[GitHub账号]/Training-Experiment-Memory（public，唯一 origin）。
+> 仓库：ccssyy/Training-Experiment-Memory（public，唯一 origin）。
 > 详细交接见 [HANDOFF.md](./HANDOFF.md)。
 
 ## 一句话
@@ -37,7 +37,7 @@ echo '{"doc_type":"packing_list","fields":[{"name":"goods_quantity","sample":"1,
 ### 2. 纯 Python 体验（任何机器，无需 GPU）
 
 ```bash
-git clone https://github.com/[GitHub账号]/Training-Experiment-Memory.git
+git clone https://github.com/ccssyy/Training-Experiment-Memory.git
 cd Training-Experiment-Memory/phase2
 python3 demo.py                 # 4 个场景：装箱单 / 出口托收 / 未知字段 / bbox 任务
 python3 ../phase3/dry_run.py    # 回灌状态判定：validated / rejected / confirmed / blocked

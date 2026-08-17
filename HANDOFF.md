@@ -103,5 +103,5 @@
 
 - **开发机**：本仓库 `[本仓库]`；Qwen 历史素材 `[Qwen训练仓库]`；同事设计 `[同事设计仓库]`。
 - **Mac 本地**：`~/Work/git/Training-Experiment-Memory`（workbuddy 开发工作区）。
-- **GitHub**：`[GitHub账号]/Training-Experiment-Memory`（public，唯一 origin）。
+- **GitHub**：`ccssyy/Training-Experiment-Memory`（public，唯一 origin）。
 - 推 GitHub 与 SSH 认证的真实配置见本地 `.workbuddy/HANDOFF-secrets.md`（gitignore，不进公开仓库）。
