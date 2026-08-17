@@ -1,0 +1,8 @@
+# bge-m3 字段语义向量服务依赖（transformers 路线，CPU/GPU 均可）
+transformers>=4.40
+torch>=2.1
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.0
+pillow
+huggingface_hub

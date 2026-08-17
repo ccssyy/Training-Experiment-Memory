@@ -1,0 +1,6 @@
+# qwen3-vl-embedding 版式向量服务依赖（vLLM 路线，需 GPU）
+vllm>=0.16
+fastapi>=0.110
+uvicorn>=0.29
+pydantic>=2.0
+pillow

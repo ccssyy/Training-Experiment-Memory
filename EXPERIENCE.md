@@ -91,12 +91,20 @@ phase2/data/
 
 **bge 服务（字段语义向量）：各容器自起**
 
+前提：容器已挂载 `/data`（能访问 `/data/LLM_model/bge-m3` 模型）+ GPU 权限（`--gpus all`）。
+
 ```bash
-PY=<含 transformers+fastapi 的 python 环境>/bin/python   # 复用共享环境
+# 0. 准备 python 环境（一次即可，依赖已列在 requirements.txt）
+python3 -m venv bge_env
+bge_env/bin/pip install -r /data/collab/training-experience-memory/bge_embedding_server/requirements.txt
+
+# 1. 起 bge 服务
 cd /data/collab/training-experience-memory/bge_embedding_server
-MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
+MODEL_PATH=/data/LLM_model/bge-m3 PORT=9033 GPU_IDS=<空闲卡号> nohup ../bge_env/bin/python app.py > server.log 2>&1 &
 curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
 ```
+
+> 若容器里已有含 transformers+torch+fastapi 的现成环境，可跳过第 0 步，直接 `PY=<现成环境>/bin/python` 起服务。
 
 访问地址：版式 `http://124.220.53.207:9030`，bge `http://127.0.0.1:9033`。
 
@@ -105,6 +113,7 @@ curl -s http://127.0.0.1:9033/health    # 期望 {"status":"ok","device":"cuda"}
 前提：你的容器已挂载 `/data`（`-v /data:/data`）+ GPU 权限（`--gpus all`）。
 
 ```bash
+# 环境依赖见 embedding_server/requirements.txt（vllm + fastapi + pillow）
 PY=<含 vllm+fastapi 的 python 环境>/bin/python
 cd /data/collab/training-experience-memory/embedding_server
 MODEL_PATH=/data/LLM_model/Qwen3-VL-Embedding-2B PORT=9031 GPU_IDS=<空闲卡号> nohup $PY app.py > server.log 2>&1 &
